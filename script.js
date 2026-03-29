@@ -539,8 +539,11 @@ document.getElementById('wizSubmit').onclick = function() {
     initAdminCharts();
   }
 
-  showToast('✦ Reservation Secured! Our team will contact you shortly.');
+  showToast('✦ Reservation Secured! Download your Soft Quote PDF.');
   
+  // PDF Generation
+  generateSoftQuotePDF(newBooking);
+
   // Reset Wizard
   setTimeout(() => {
     goToStep(1);
@@ -552,6 +555,106 @@ document.getElementById('wizSubmit').onclick = function() {
     if (document.getElementById('wizDate')._flatpickr) document.getElementById('wizDate')._flatpickr.clear();
   }, 1000);
 };
+
+// ===== SOFT QUOTE PDF (jsPDF) =====
+function generateSoftQuotePDF(booking) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Branding Colors
+  const gold = [201, 168, 76];
+  const dark = [30, 30, 26];
+
+  // Header
+  doc.setFillColor(30, 30, 26);
+  doc.rect(0, 0, 210, 40, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.text('9 WAVES EVENTS PLACE', 105, 20, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text('PREMIUM RESORT & EVENTS VENUE', 105, 30, { align: 'center' });
+
+  // Soft Quote Title
+  doc.setTextColor(gold[0], gold[1], gold[2]);
+  doc.setFontSize(16);
+  doc.text('SOFT QUOTE PREVIEW', 20, 55);
+  
+  doc.setDrawColor(201, 168, 76);
+  doc.line(20, 58, 80, 58);
+
+  // Client Info
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(12);
+  doc.text(`Client: ${booking.client}`, 20, 70);
+  doc.text(`Date Prepared: ${new Date().toLocaleDateString()}`, 140, 70);
+
+  // Event Details Table
+  doc.setFillColor(245, 245, 245);
+  doc.rect(15, 80, 180, 50, 'F');
+  
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text('EVENT TYPE', 20, 90);
+  doc.text('RESERVED DATE', 70, 90);
+  doc.text('SELECTED VENUE', 130, 90);
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(12);
+  doc.text(booking.event.toUpperCase(), 20, 100);
+  doc.text(booking.date || 'To be discussed', 70, 100);
+  doc.text(booking.venue, 130, 100);
+
+  // Add-ons / Extras
+  doc.setTextColor(gold[0], gold[1], gold[2]);
+  doc.setFontSize(14);
+  doc.text('ENHANCEMENTS & EXTRAS', 20, 145);
+  
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  let y = 155;
+  if (booking.extras && booking.extras.length > 0) {
+    booking.extras.forEach(extra => {
+      doc.text(`✦ ${extra}`, 25, y);
+      y += 8;
+    });
+  } else {
+    doc.text('No optional extras selected.', 25, y);
+  }
+
+  // Pricing Estimation
+  let basePrice = 85000; // Default for Garden
+  if (booking.venue === 'Pearl Ballroom') basePrice = 125000;
+  if (booking.venue === 'Tidal Pool Terrace') basePrice = 65000;
+  
+  const extrasCost = (booking.extras ? booking.extras.length : 0) * 15000;
+  const totalEst = basePrice + extrasCost;
+
+  doc.setFillColor(252, 250, 247);
+  doc.rect(120, 180, 75, 40, 'F');
+  doc.setDrawColor(229, 223, 213);
+  doc.rect(120, 180, 75, 40, 'S');
+
+  doc.setFontSize(10);
+  doc.text('ESTIMATED STARTING AT', 125, 190);
+  doc.setFontSize(18);
+  doc.setTextColor(gold[0], gold[1], gold[2]);
+  doc.text(`PHP ${totalEst.toLocaleString()}`, 125, 205);
+
+  // Footer / Disclaimer
+  doc.setTextColor(120, 120, 120);
+  doc.setFontSize(9);
+  doc.text('Terms and Conditions:', 20, 240);
+  doc.text('1. This is a non-binding soft quote for planning purposes only.', 20, 248);
+  doc.text('2. Prices are subject to final contract and guest count verification.', 20, 254);
+  doc.text('3. Venue reservation is confirmed only upon payment of reservation fee.', 20, 260);
+
+  doc.setFontSize(10);
+  doc.text('Thank you for choosing 9 Waves Events Place.', 105, 280, { align: 'center' });
+
+  // Save the PDF
+  doc.save(`9Waves_Quote_${booking.client.replace(/\s/g, '_')}.pdf`);
+}
 
 // ===== SMOOTH SCROLL =====
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
