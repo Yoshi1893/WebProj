@@ -147,8 +147,9 @@ body {
   font-size: 14px;
   color: var(--text);
   outline: none;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, box-shadow 0.25s;
   background: #fafafa;
+  min-height: 48px;
 }
 .auth-group input:focus {
   border-color: var(--gold);
@@ -473,13 +474,13 @@ nav.scrolled .hamburger span {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    #2d3d25 0%,
-    #4e5e45 30%,
-    #7a8c6e 60%,
-    #3d5230 100%
-  );
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(45, 61, 37, 0.7) 0%,
+      rgba(78, 94, 69, 0.5) 100%
+    ),
+    url("https://images.unsplash.com/photo-1519225421980-715cb0215aed?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80") center/cover no-repeat;
 }
 .hero-bg::before {
   content: "";
@@ -1882,4 +1883,35 @@ footer {
   .customer-topbar {
     padding: 14px 20px;
   }
+}
+
+/* --- UI/UX POLISH ADDITIONS --- */
+.flatpickr-calendar {
+  font-family: "Jost", sans-serif;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  min-height: 48px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.form-group input.valid,
+.form-group select.valid,
+.form-group textarea.valid,
+.auth-group input.valid {
+  border-color: #7a8c6e !important;
+  box-shadow: 0 0 0 1px #7a8c6e;
+}
+.form-group input.invalid,
+.form-group select.invalid,
+.form-group textarea.invalid,
+.auth-group input.invalid {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 1px #c0392b;
+}
+/* Micro-interaction on buttons */
+.btn-primary:active,
+.auth-btn:active,
+.form-submit:active {
+  transform: translateY(1px) scale(0.98);
 }

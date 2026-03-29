@@ -295,5 +295,40 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
   };
 });
 
+// ===== REAL-TIME VALIDATION =====
+function validateInput(e) {
+  const el = e.target;
+  if (!el.value) {
+    el.classList.remove('valid', 'invalid');
+    return;
+  }
+  
+  let isValid = el.checkValidity();
+  // Extra check for password length
+  if (el.type === 'password' && el.id !== 'adminKey' && el.id !== 'loginPassword') {
+    isValid = el.value.length >= 6;
+  }
+  
+  if (isValid) {
+    el.classList.add('valid');
+    el.classList.remove('invalid');
+  } else {
+    el.classList.add('invalid');
+    el.classList.remove('valid');
+  }
+}
+
+document.querySelectorAll('input, select, textarea').forEach(input => {
+  input.addEventListener('input', validateInput);
+  input.addEventListener('change', validateInput);
+});
+
 // ===== INIT =====
 updateNav();
+if (window.flatpickr) {
+  flatpickr("#inqDate", {
+    minDate: "today",
+    dateFormat: "F j, Y",
+    disableMobile: "true"
+  });
+}
