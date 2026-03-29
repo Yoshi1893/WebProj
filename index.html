@@ -28,9 +28,9 @@
         <button class="role-btn active" data-role="customer">👤 Customer</button>
         <button class="role-btn" data-role="admin">🔐 Admin</button>
       </div>
-      <div class="auth-group"><label>Email Address</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
-      <div class="auth-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
-      <div class="auth-group admin-key-field" id="adminKeyField"><label>Admin Access Key</label><input type="password" id="adminKey" placeholder="Enter admin key"></div>
+      <div class="auth-group"><label for="loginEmail">Email Address</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+      <div class="auth-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+      <div class="auth-group admin-key-field" id="adminKeyField"><label for="adminKey">Admin Access Key</label><input type="password" id="adminKey" placeholder="Enter admin key"></div>
       <div class="auth-error" id="loginError"></div>
       <button class="auth-btn" id="loginBtn">Sign In ✦</button>
       <p class="auth-footer-text">Don't have an account? <a href="#" id="goRegister">Create one</a></p>
@@ -41,13 +41,13 @@
       <h2 class="auth-title">Join <em>9 Waves</em></h2>
       <p class="auth-subtitle">Create your account to start planning your perfect celebration.</p>
       <div class="auth-reg-row">
-        <div class="auth-group"><label>First Name</label><input type="text" id="regFirst" placeholder="Maria"></div>
-        <div class="auth-group"><label>Last Name</label><input type="text" id="regLast" placeholder="Santos"></div>
+        <div class="auth-group"><label for="regFirst">First Name</label><input type="text" id="regFirst" placeholder="Maria"></div>
+        <div class="auth-group"><label for="regLast">Last Name</label><input type="text" id="regLast" placeholder="Santos"></div>
       </div>
-      <div class="auth-group"><label>Email Address</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
-      <div class="auth-group"><label>Contact Number</label><input type="tel" id="regPhone" placeholder="+63 917 000 0000"></div>
-      <div class="auth-group"><label>Password</label><input type="password" id="regPassword" placeholder="Minimum 6 characters"></div>
-      <div class="auth-group"><label>Confirm Password</label><input type="password" id="regConfirm" placeholder="Re-enter password"></div>
+      <div class="auth-group"><label for="regEmail">Email Address</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
+      <div class="auth-group"><label for="regPhone">Contact Number</label><input type="tel" id="regPhone" placeholder="+63 917 000 0000"></div>
+      <div class="auth-group"><label for="regPassword">Password</label><input type="password" id="regPassword" placeholder="Minimum 6 characters"></div>
+      <div class="auth-group"><label for="regConfirm">Confirm Password</label><input type="password" id="regConfirm" placeholder="Re-enter password"></div>
       <div class="auth-error" id="regError"></div>
       <button class="auth-btn" id="registerBtn">Create Account ✦</button>
       <p class="auth-footer-text">Already have an account? <a href="#" id="goLogin">Sign in</a></p>
@@ -266,17 +266,17 @@
     <div class="contact-form">
       <form id="inquiryForm">
         <div class="form-row">
-          <div class="form-group"><label>First Name</label><input type="text" placeholder="Maria" required></div>
-          <div class="form-group"><label>Last Name</label><input type="text" placeholder="Santos" required></div>
+          <div class="form-group"><label for="inqFirst">First Name</label><input type="text" id="inqFirst" placeholder="Maria" required></div>
+          <div class="form-group"><label for="inqLast">Last Name</label><input type="text" id="inqLast" placeholder="Santos" required></div>
         </div>
-        <div class="form-group"><label>Email Address</label><input type="email" placeholder="maria@email.com" required></div>
-        <div class="form-group"><label>Contact Number</label><input type="tel" placeholder="+63 917 000 0000"></div>
+        <div class="form-group"><label for="inqEmail">Email Address</label><input type="email" id="inqEmail" placeholder="maria@email.com" required></div>
+        <div class="form-group"><label for="inqPhone">Contact Number</label><input type="tel" id="inqPhone" placeholder="+63 917 000 0000"></div>
         <div class="form-row">
-          <div class="form-group"><label>Event Type</label><select required><option value="" disabled selected>Select event</option><option>Wedding</option><option>Debut / 18th Birthday</option><option>Birthday Celebration</option><option>Corporate Event</option><option>Baptism / Christening</option><option>Anniversary</option><option>Other</option></select></div>
-          <div class="form-group"><label>Preferred Venue</label><select><option value="" disabled selected>Select venue</option><option>Wavecrest Garden</option><option>Pearl Ballroom</option><option>Tidal Pool Terrace</option><option>Not Sure Yet</option></select></div>
+          <div class="form-group"><label for="inqEvent">Event Type</label><select id="inqEvent" required><option value="" disabled selected>Select event</option><option>Wedding</option><option>Debut / 18th Birthday</option><option>Birthday Celebration</option><option>Corporate Event</option><option>Baptism / Christening</option><option>Anniversary</option><option>Other</option></select></div>
+          <div class="form-group"><label for="inqVenue">Preferred Venue</label><select id="inqVenue"><option value="" disabled selected>Select venue</option><option>Wavecrest Garden</option><option>Pearl Ballroom</option><option>Tidal Pool Terrace</option><option>Not Sure Yet</option></select></div>
         </div>
-        <div class="form-group"><label>Event Date</label><input type="date"></div>
-        <div class="form-group"><label>Message</label><textarea placeholder="Tell us about your dream event..."></textarea></div>
+        <div class="form-group"><label for="inqDate">Event Date</label><input type="date" id="inqDate"></div>
+        <div class="form-group"><label for="inqMessage">Message</label><textarea id="inqMessage" placeholder="Tell us about your dream event..."></textarea></div>
         <button type="submit" class="form-submit">Send Inquiry ✦</button>
       </form>
     </div>

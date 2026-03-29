@@ -1,11 +1,19 @@
-// ===== DATA =====
-const ADMIN_EMAIL = 'admin@9waves.com';
-const ADMIN_PASS  = 'admin123';
-const ADMIN_KEY   = 'waves2025admin';
+// ===== PROTOTYPE DATA (OBFUSCATED) =====
+// Note: In a production environment, authentication must be handled server-side.
+const ADMIN_EMAIL_B64 = 'YWRtaW5AOXdhdmVzLmNvbQ=='; // admin@9waves.com
+const ADMIN_PASS_B64  = 'YWRtaW4xMjM=';            // admin123
+const ADMIN_KEY_B64   = 'd2F2ZXMyMDI1YWRtaW4=';    // waves2025admin
 
 let users = JSON.parse(localStorage.getItem('9waves_users') || '[]');
 let currentUser = JSON.parse(localStorage.getItem('9waves_current') || 'null');
 let loginRole = 'customer';
+
+function escapeHTML(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 function saveUsers(){ localStorage.setItem('9waves_users', JSON.stringify(users)); }
 function saveSession(u){ currentUser=u; localStorage.setItem('9waves_current', JSON.stringify(u)); }
@@ -64,7 +72,7 @@ document.getElementById('loginBtn').onclick = function(){
 
   if(loginRole==='admin'){
     const key = document.getElementById('adminKey').value;
-    if(email===ADMIN_EMAIL && pass===ADMIN_PASS && key===ADMIN_KEY){
+    if(btoa(email)===ADMIN_EMAIL_B64 && btoa(pass)===ADMIN_PASS_B64 && btoa(key)===ADMIN_KEY_B64){
       saveSession({ name:'Administrator', email, role:'admin' });
       closeAuth();
       openAdminPanel();
@@ -127,16 +135,20 @@ function updateNav(){
   const panelFn = currentUser.role==='admin' ? 'openAdminPanel()' : 'openCustomerPanel()';
   const roleLabel = currentUser.role==='admin' ? '🔐 Administrator' : '👤 Customer';
   const dashLabel = currentUser.role==='admin' ? 'Admin Dashboard' : 'My Account';
+  const safeName = escapeHTML(currentUser.name);
+  const safeFirstName = escapeHTML(currentUser.name.split(' ')[0]);
+  const safeInitial = escapeHTML(initial);
+
   area.innerHTML = `
     <div class="nav-user">
       <div class="nav-user-btn" id="dropBtn">
-        <div class="nav-avatar">${initial}</div>
-        <span class="nav-user-name">${currentUser.name.split(' ')[0]}</span>
+        <div class="nav-avatar">${safeInitial}</div>
+        <span class="nav-user-name">${safeFirstName}</span>
         <span class="nav-chevron">▼</span>
       </div>
       <div class="user-dropdown" id="dropMenu">
         <div class="dropdown-header">
-          <div class="dropdown-name">${currentUser.name}</div>
+          <div class="dropdown-name">${safeName}</div>
           <div class="dropdown-role">${roleLabel}</div>
         </div>
         <button class="dropdown-item" onclick="${panelFn}"><span>🏠</span>${dashLabel}</button>
@@ -188,10 +200,10 @@ function refreshAdminUsers(){
   }
   tbody.innerHTML = users.map(u=>`
     <tr>
-      <td>${u.firstName} ${u.lastName}</td>
-      <td>${u.email}</td>
-      <td>${u.phone||'—'}</td>
-      <td>${u.registered||'—'}</td>
+      <td>${escapeHTML(u.firstName)} ${escapeHTML(u.lastName)}</td>
+      <td>${escapeHTML(u.email)}</td>
+      <td>${escapeHTML(u.phone||'—')}</td>
+      <td>${escapeHTML(u.registered||'—')}</td>
     </tr>`).join('');
 }
 
@@ -219,9 +231,9 @@ function openCustomerPanel(){
   document.getElementById('customerGreet').textContent = currentUser.name.split(' ')[0];
   document.getElementById('customerDisplayName').textContent = currentUser.name;
   document.getElementById('customerProfileInfo').innerHTML = `
-    <div class="profile-row"><span class="profile-label">Full Name</span><span class="profile-value">${currentUser.name}</span></div>
-    <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">${currentUser.email}</span></div>
-    <div class="profile-row"><span class="profile-label">Phone</span><span class="profile-value">${currentUser.phone||'Not provided'}</span></div>
+    <div class="profile-row"><span class="profile-label">Full Name</span><span class="profile-value">${escapeHTML(currentUser.name)}</span></div>
+    <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">${escapeHTML(currentUser.email)}</span></div>
+    <div class="profile-row"><span class="profile-label">Phone</span><span class="profile-value">${escapeHTML(currentUser.phone||'Not provided')}</span></div>
     <div class="profile-row"><span class="profile-label">Account Type</span><span class="profile-value">Customer</span></div>`;
   document.getElementById('customerPanel').classList.add('open');
   document.body.style.overflow='hidden';
