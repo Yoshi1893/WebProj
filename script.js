@@ -2,11 +2,22 @@
 // Note: In a production environment, authentication must be handled server-side.
 const ADMIN_EMAIL_B64 = 'YWRtaW5AOXdhdmVzLmNvbQ=='; // admin@9waves.com
 const ADMIN_PASS_B64  = 'YWRtaW4xMjM=';            // admin123
-const ADMIN_KEY_B64   = 'd2F2ZXMyMDI1YWRtaW4=';    // waves2025admin
 
 let users = JSON.parse(localStorage.getItem('9waves_users') || '[]');
 let currentUser = JSON.parse(localStorage.getItem('9waves_current') || 'null');
-let loginRole = 'customer';
+let bookings  = JSON.parse(localStorage.getItem('9waves_bookings') || '[]');
+
+// Seed initial bookings if empty
+if (bookings.length === 0) {
+  bookings = [
+    { id: 1, client: 'Andrea Santos', event: 'Wedding', venue: 'Pearl Ballroom', date: '2025-04-12', status: 'pending' },
+    { id: 2, client: 'Lorraine Dela Cruz', event: 'Debut', venue: 'Wavecrest Garden', date: '2025-05-03', status: 'confirmed' },
+    { id: 3, client: 'Raphael Tan', event: 'Corporate Gala', venue: 'Pearl Ballroom', date: '2025-06-20', status: 'pending' },
+    { id: 4, client: 'Elena Rodriguez', event: 'Wedding', venue: 'Wavecrest Garden', date: '2025-05-15', status: 'confirmed' },
+    { id: 5, client: 'Marcus Wong', event: 'Corporate Event', venue: 'Tidal Pool Terrace', date: '2025-07-10', status: 'pending' }
+  ];
+  localStorage.setItem('9waves_bookings', JSON.stringify(bookings));
+}
 
 function escapeHTML(str) {
   if (!str) return '';
@@ -18,6 +29,10 @@ function escapeHTML(str) {
 function saveUsers(){ localStorage.setItem('9waves_users', JSON.stringify(users)); }
 function saveSession(u){ currentUser=u; localStorage.setItem('9waves_current', JSON.stringify(u)); }
 function clearSession(){ currentUser=null; localStorage.removeItem('9waves_current'); }
+function saveBookings(){ 
+  localStorage.setItem('9waves_bookings', JSON.stringify(bookings)); 
+  updateAvailabilityCalendar();
+}
 
 // ===== TOAST =====
 function showToast(msg, bg){
@@ -47,16 +62,6 @@ document.querySelectorAll('.auth-tab').forEach(tab=>{
 document.getElementById('goRegister').onclick = e=>{ e.preventDefault(); document.querySelectorAll('.auth-tab')[1].click(); };
 document.getElementById('goLogin').onclick    = e=>{ e.preventDefault(); document.querySelectorAll('.auth-tab')[0].click(); };
 
-// ROLE BUTTONS
-document.querySelectorAll('.role-btn').forEach(btn=>{
-  btn.onclick = function(){
-    document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
-    this.classList.add('active');
-    loginRole = this.dataset.role;
-    document.getElementById('adminKeyField').classList.toggle('show', loginRole==='admin');
-  };
-});
-
 function clearFormErrors(){
   ['loginError','regError'].forEach(id=>{ const el=document.getElementById(id); el.style.display='none'; el.textContent=''; });
 }
@@ -70,19 +75,16 @@ document.getElementById('loginBtn').onclick = function(){
 
   if(!email||!pass){ showError('loginError','Please fill in all fields.'); return; }
 
-  if(loginRole==='admin'){
-    const key = document.getElementById('adminKey').value;
-    if(btoa(email)===ADMIN_EMAIL_B64 && btoa(pass)===ADMIN_PASS_B64 && btoa(key)===ADMIN_KEY_B64){
-      saveSession({ name:'Administrator', email, role:'admin' });
-      closeAuth();
-      openAdminPanel();
-      showToast('✦ Welcome back, Admin!');
-    } else {
-      showError('loginError','Invalid admin credentials or access key.');
-    }
+  // Check Admin First
+  if(btoa(email)===ADMIN_EMAIL_B64 && btoa(pass)===ADMIN_PASS_B64){
+    saveSession({ name:'Administrator', email, role:'admin' });
+    closeAuth();
+    openAdminPanel();
+    showToast('✦ Welcome back, Admin!');
     return;
   }
 
+  // Check Customers
   const user = users.find(u=>u.email===email && u.password===pass);
   if(user){
     saveSession({ name:user.firstName+' '+user.lastName, email:user.email, role:'customer', phone:user.phone });
@@ -90,7 +92,7 @@ document.getElementById('loginBtn').onclick = function(){
     openCustomerPanel();
     showToast('✦ Welcome back, '+user.firstName+'!');
   } else {
-    showError('loginError','No account found with these credentials. Please try again.');
+    showError('loginError','Invalid credentials. Please try again.');
   }
 };
 
@@ -186,6 +188,8 @@ function openAdminPanel(){
   document.getElementById('adminGreet').textContent = currentUser.name.split(' ')[0];
   document.getElementById('adminDisplayName').textContent = currentUser.name;
   refreshAdminUsers();
+  refreshAdminBookings();
+  initAdminCharts();
   document.getElementById('adminPanel').classList.add('open');
   document.body.style.overflow='hidden';
   updateNav();
@@ -207,22 +211,93 @@ function refreshAdminUsers(){
     </tr>`).join('');
 }
 
-function changeStatus(btn, status){
-  const row = btn.closest('tr');
-  const badge = row.querySelector('.status-badge');
-  badge.className = 'status-badge status-'+status;
-  badge.textContent = status.charAt(0).toUpperCase()+status.slice(1);
-  const td = btn.parentElement;
-  if(status==='confirmed'){
-    btn.textContent='Cancel'; btn.className='tbl-btn tbl-cancel';
-    btn.onclick=function(){ changeStatus(this,'cancelled'); };
-  } else {
-    td.innerHTML='<span style="color:#ccc;font-size:13px;">—</span>';
+function refreshAdminBookings(){
+  const tbody = document.getElementById('adminBookingsBody');
+  const statBookings = document.getElementById('statBookings');
+  const statPending = document.getElementById('statPending');
+  
+  statBookings.textContent = bookings.length;
+  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  statPending.textContent = pendingCount;
+
+  if(!bookings.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px 18px;">No bookings found.</td></tr>';
+    return;
   }
-  // Update stats
-  const all = document.querySelectorAll('#adminBookingsBody .status-badge');
-  const pending = [...all].filter(b=>b.classList.contains('status-pending')).length;
-  document.getElementById('statPending').textContent = pending;
+
+  tbody.innerHTML = bookings.map(b => {
+    const statusClass = `status-${b.status}`;
+    const statusLabel = b.status.charAt(0).toUpperCase() + b.status.slice(1);
+    
+    let actionBtn = '';
+    if (b.status === 'pending') {
+      actionBtn = `<button class="tbl-btn tbl-confirm" onclick="changeBookingStatus(${b.id}, 'confirmed')">Confirm</button>`;
+    } else if (b.status === 'confirmed') {
+      actionBtn = `<button class="tbl-btn tbl-cancel" onclick="changeBookingStatus(${b.id}, 'cancelled')">Cancel</button>`;
+    } else {
+      actionBtn = `<span style="color:#ccc;font-size:13px;">—</span>`;
+    }
+
+    return `
+      <tr>
+        <td>${escapeHTML(b.client)}</td>
+        <td>${escapeHTML(b.event)}</td>
+        <td>${escapeHTML(b.venue)}</td>
+        <td>${new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td>${actionBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function changeBookingStatus(id, status){
+  const booking = bookings.find(b => b.id === id);
+  if (booking) {
+    if (status === 'cancelled') {
+      const confirmed = await showConfirmModal(
+        'Confirm Cancellation', 
+        `Are you sure you want to cancel the booking for ${booking.client}? This action cannot be undone.`
+      );
+      if (!confirmed) return;
+    }
+
+    booking.status = status;
+    saveBookings();
+    refreshAdminBookings();
+    initAdminCharts(); // Refresh charts
+    showToast(`✦ Booking for ${booking.client} ${status}!`);
+  }
+}
+
+function showConfirmModal(title, message) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = message;
+    
+    overlay.classList.add('open');
+
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
+
+    const onYes = () => {
+      overlay.classList.remove('open');
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+      resolve(true);
+    };
+
+    const onNo = () => {
+      overlay.classList.remove('open');
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+      resolve(false);
+    };
+
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+  });
 }
 
 // ===== CUSTOMER PANEL =====
@@ -281,10 +356,48 @@ strip.addEventListener('mouseup',()=>down=false);
 strip.addEventListener('mousemove',e=>{ if(!down) return; e.preventDefault(); strip.scrollLeft=sl-(e.pageX-strip.offsetLeft-sx)*1.5; });
 
 // ===== INQUIRY FORM =====
-document.getElementById('inquiryForm').addEventListener('submit',function(e){
+document.getElementById('inquiryForm').addEventListener('submit', function(e) {
   e.preventDefault();
+  
+  const firstName = document.getElementById('inqFirst').value;
+  const lastName = document.getElementById('inqLast').value;
+  const email = document.getElementById('inqEmail').value;
+  const phone = document.getElementById('inqPhone').value;
+  const event = document.getElementById('inqEvent').value;
+  const venue = 'To be discussed'; // Optional: add a venue selector to form
+  const date = document.getElementById('inqDate').value;
+
+  if (!date) {
+    showToast('Please select a date for your event.', '#c0392b');
+    return;
+  }
+
+  const newBooking = {
+    id: Date.now(),
+    client: `${firstName} ${lastName}`,
+    email: email,
+    phone: phone,
+    event: event,
+    venue: venue,
+    date: date,
+    status: 'pending'
+  };
+
+  bookings.push(newBooking);
+  saveBookings();
+  
+  // Refresh admin views if open
+  if (document.getElementById('adminPanel').classList.contains('open')) {
+    refreshAdminBookings();
+    initAdminCharts();
+  }
+
   showToast('✦ Inquiry sent! We\'ll be in touch within 24 hours.');
   this.reset();
+  
+  // Reset flatpickr
+  const fp = document.getElementById('inqDate')._flatpickr;
+  if (fp) fp.clear();
 });
 
 // ===== SMOOTH SCROLL =====
@@ -328,7 +441,217 @@ updateNav();
 if (window.flatpickr) {
   flatpickr("#inqDate", {
     minDate: "today",
-    dateFormat: "F j, Y",
+    altInput: true,
+    altFormat: "F j, Y",
+    dateFormat: "Y-m-d",
     disableMobile: "true"
+  });
+}
+
+// ===== LIGHTBOX LOGIC =====
+const lb = document.getElementById('lightbox');
+const lbImg = document.getElementById('lightboxImage');
+const lbCap = document.getElementById('lightboxCaption');
+const lbClose = document.getElementById('lightboxClose');
+let currentLbIndex = 0;
+let lbItems = [];
+
+function getBgUrl(el) {
+  if (!el) return '';
+  const bg = window.getComputedStyle(el).backgroundImage;
+  if (!bg || bg === 'none') return '';
+  return bg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+}
+
+function updateLightbox() {
+  const item = lbItems[currentLbIndex];
+  if (!item) return;
+  lbImg.src = item.url;
+  lbCap.textContent = item.caption;
+}
+
+function openLightbox(index) {
+  currentLbIndex = index;
+  updateLightbox();
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initLightbox() {
+  // Clear any existing list
+  lbItems = [];
+  
+  // Find all components that should be lightboxed
+  const galleryItems = document.querySelectorAll('.gallery-item');
+  const venueCards = document.querySelectorAll('.venue-card');
+  
+  // Build the unified items list
+  galleryItems.forEach(el => {
+    const bg = el.querySelector('.gallery-bg');
+    const cap = el.querySelector('.gallery-item-label')?.textContent || 'Gallery View';
+    lbItems.push({ el, url: getBgUrl(bg), caption: cap });
+  });
+  
+  venueCards.forEach(el => {
+    const bg = el.querySelector('.venue-img-bg');
+    const cap = el.querySelector('.venue-name')?.textContent || 'Venue View';
+    lbItems.push({ el, url: getBgUrl(bg), caption: cap });
+  });
+
+  // Attach single event listener to each
+  lbItems.forEach((item, idx) => {
+    item.el.addEventListener('click', (e) => {
+      // Don't open if clicking a child button/link (like "Book Now")
+      if (e.target.closest('a') || e.target.closest('button')) return;
+      openLightbox(idx);
+    });
+  });
+}
+
+lbClose.onclick = closeLightbox;
+lb.onclick = (e) => { if (e.target === lb) closeLightbox(); };
+document.getElementById('lbPrev').onclick = (e) => {
+  e.stopPropagation();
+  currentLbIndex = (currentLbIndex - 1 + lbItems.length) % lbItems.length;
+  updateLightbox();
+};
+document.getElementById('lbNext').onclick = (e) => {
+  e.stopPropagation();
+  currentLbIndex = (currentLbIndex + 1) % lbItems.length;
+  updateLightbox();
+};
+
+initLightbox();
+
+// ===== ESTIMATOR LOGIC =====
+const PRICES = {
+  ripple: { base: 45000, pax: 100, extra: 350 },
+  crest: { base: 85000, pax: 200, extra: 450 },
+  sovereign: { base: 150000, pax: 500, extra: 600 }
+};
+
+function updateCalculator() {
+  const pkgKey = document.getElementById('estPackage').value;
+  const guests = parseInt(document.getElementById('estGuests').value);
+  const pkg = PRICES[pkgKey];
+  
+  document.getElementById('guestCountLabel').textContent = guests;
+  
+  let total = pkg.base;
+  const extraGuests = Math.max(0, guests - pkg.pax);
+  const extraCost = extraGuests * pkg.extra;
+  total += extraCost;
+  
+  const addons = document.querySelectorAll('.est-addon:checked');
+  let addonTotal = 0;
+  addons.forEach(a => addonTotal += parseInt(a.dataset.price));
+  total += addonTotal;
+  
+  // Format price
+  const fmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
+  document.getElementById('totalPrice').textContent = fmt.format(total).replace('PHP', '₱');
+  
+  const pkgName = pkgKey.charAt(0).toUpperCase() + pkgKey.slice(1);
+  document.getElementById('estSummary').innerHTML = `
+    <strong>${pkgName} Package</strong> (${guests} Guests)<br>
+    Base + Extra Head: ${fmt.format(pkg.base + extraCost).replace('PHP', '₱')}<br>
+    Add-ons: ${fmt.format(addonTotal).replace('PHP', '₱')}
+  `;
+}
+
+document.getElementById('estPackage').onchange = updateCalculator;
+document.getElementById('estGuests').oninput = updateCalculator;
+document.querySelectorAll('.est-addon').forEach(a => a.onchange = updateCalculator);
+
+updateCalculator();
+
+// ===== AVAILABILITY CALENDAR =====
+let availCal;
+function updateAvailabilityCalendar() {
+  if (!availCal) {
+    availCal = flatpickr("#availabilityCal", {
+      inline: true,
+      minDate: "today",
+      onDayCreate: (dObj, dStr, fp, dayElem) => {
+        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+        const match = bookings.find(b => b.date === dateStr);
+        if (match) {
+          dayElem.classList.add(match.status);
+          dayElem.title = `${match.event} (${match.status})`;
+        }
+      }
+    });
+  } else {
+    availCal.redraw();
+  }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  updateAvailabilityCalendar();
+});
+
+// ===== ADMIN ANALYTICS (CHART.JS) =====
+let trendChart, statusChart;
+function initAdminCharts() {
+  const trendCtx = document.getElementById('bookingTrendChart');
+  const typeCtx = document.getElementById('eventTypeChart');
+  if (!trendCtx || !typeCtx) return;
+
+  // Prepare data: Bookings per month
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthlyData = new Array(12).fill(0);
+  bookings.filter(b => b.status === 'confirmed').forEach(b => {
+    const m = new Date(b.date).getMonth();
+    monthlyData[m]++;
+  });
+
+  // Prepare data: Event Types
+  const types = {};
+  bookings.forEach(b => {
+    types[b.event] = (types[b.event] || 0) + 1;
+  });
+
+  if (trendChart) trendChart.destroy();
+  if (statusChart) statusChart.destroy();
+
+  trendChart = new Chart(trendCtx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Confirmed Bookings',
+        data: monthlyData,
+        backgroundColor: '#7a8c6e',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+
+  statusChart = new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(types),
+      datasets: [{
+        data: Object.values(types),
+        backgroundColor: ['#7a8c6e', '#c9a84c', '#4e5e45', '#e2c97e', '#1e1e1a'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '70%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+    }
   });
 }

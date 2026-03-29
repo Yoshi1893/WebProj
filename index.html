@@ -1,306 +1,713 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>9 Waves Events Place</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>9 Waves Events Place</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<!-- AUTH MODAL -->
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-modal">
-    <button class="auth-modal-close" id="authClose">✕</button>
-    <div class="auth-brand">✦ 9 Waves Events Place</div>
+  <!-- AUTH MODAL -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal">
+      <button class="auth-modal-close" id="authClose">✕</button>
+      <div class="auth-brand">✦ 9 Waves Events Place</div>
 
-    <div class="auth-tabs">
-      <div class="auth-tab active" data-tab="login">Sign In</div>
-      <div class="auth-tab" data-tab="register">Create Account</div>
-    </div>
-
-    <!-- LOGIN -->
-    <div class="auth-panel active" id="panel-login">
-      <h2 class="auth-title">Welcome <em>Back</em></h2>
-      <p class="auth-subtitle">Sign in to manage your bookings and inquiries.</p>
-      <div class="auth-role-toggle">
-        <button class="role-btn active" data-role="customer">👤 Customer</button>
-        <button class="role-btn" data-role="admin">🔐 Admin</button>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Sign In</div>
+        <div class="auth-tab" data-tab="register">Create Account</div>
       </div>
-      <div class="auth-group"><label for="loginEmail">Email Address</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
-      <div class="auth-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
-      <div class="auth-group admin-key-field" id="adminKeyField"><label for="adminKey">Admin Access Key</label><input type="password" id="adminKey" placeholder="Enter admin key"></div>
-      <div class="auth-error" id="loginError"></div>
-      <button class="auth-btn" id="loginBtn">Sign In ✦</button>
-      <p class="auth-footer-text">Don't have an account? <a href="#" id="goRegister">Create one</a></p>
-    </div>
 
-    <!-- REGISTER -->
-    <div class="auth-panel" id="panel-register">
-      <h2 class="auth-title">Join <em>9 Waves</em></h2>
-      <p class="auth-subtitle">Create your account to start planning your perfect celebration.</p>
-      <div class="auth-reg-row">
-        <div class="auth-group"><label for="regFirst">First Name</label><input type="text" id="regFirst" placeholder="Maria"></div>
-        <div class="auth-group"><label for="regLast">Last Name</label><input type="text" id="regLast" placeholder="Santos"></div>
+      <!-- LOGIN -->
+      <div class="auth-panel active" id="panel-login">
+        <h2 class="auth-title">Welcome <em>Back</em></h2>
+        <p class="auth-subtitle">Sign in to manage your bookings and inquiries.</p>
+        <div class="auth-group"><label for="loginEmail">Email Address</label><input type="email" id="loginEmail"
+            placeholder="your@email.com"></div>
+        <div class="auth-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword"
+            placeholder="••••••••"></div>
+        <div class="auth-error" id="loginError"></div>
+        <button class="auth-btn" id="loginBtn">Sign In ✦</button>
+        <p class="auth-footer-text">Don't have an account? <a href="#" id="goRegister">Create one</a></p>
       </div>
-      <div class="auth-group"><label for="regEmail">Email Address</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
-      <div class="auth-group"><label for="regPhone">Contact Number</label><input type="tel" id="regPhone" placeholder="+63 917 000 0000"></div>
-      <div class="auth-group"><label for="regPassword">Password</label><input type="password" id="regPassword" placeholder="Minimum 6 characters"></div>
-      <div class="auth-group"><label for="regConfirm">Confirm Password</label><input type="password" id="regConfirm" placeholder="Re-enter password"></div>
-      <div class="auth-error" id="regError"></div>
-      <button class="auth-btn" id="registerBtn">Create Account ✦</button>
-      <p class="auth-footer-text">Already have an account? <a href="#" id="goLogin">Sign in</a></p>
-    </div>
-  </div>
-</div>
 
-<!-- ADMIN PANEL -->
-<div class="admin-panel" id="adminPanel">
-  <div class="admin-topbar">
-    <div class="admin-topbar-title">9 Waves <em>Admin Dashboard</em></div>
-    <div class="admin-topbar-right">
-      <div class="admin-chip">
-        <div class="admin-chip-avatar">🔐</div>
-        <span id="adminDisplayName">Admin</span>
-      </div>
-      <button class="panel-signout" onclick="signOut()">Sign Out</button>
-    </div>
-  </div>
-  <div class="admin-body">
-    <div class="panel-welcome">
-      <h2>Good day, <em id="adminGreet">Admin</em> 👋</h2>
-      <p>Here's a live overview of your venue operations and bookings.</p>
-    </div>
-    <div class="admin-stats-row">
-      <div class="admin-stat-card"><div class="admin-stat-num" id="statBookings">5</div><div class="admin-stat-lbl">Total Bookings</div></div>
-      <div class="admin-stat-card"><div class="admin-stat-num" id="statPending">3</div><div class="admin-stat-lbl">Pending Inquiries</div></div>
-      <div class="admin-stat-card"><div class="admin-stat-num">3</div><div class="admin-stat-lbl">Venues Available</div></div>
-      <div class="admin-stat-card"><div class="admin-stat-num" id="statUsers">0</div><div class="admin-stat-lbl">Registered Customers</div></div>
-    </div>
-
-    <div class="panel-section-title">Inquiries & Bookings</div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Client</th><th>Event Type</th><th>Venue</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody id="adminBookingsBody">
-          <tr><td>Andrea Santos</td><td>Wedding</td><td>Pearl Ballroom</td><td>Apr 12, 2025</td><td><span class="status-badge status-pending">Pending</span></td><td><button class="tbl-btn tbl-confirm" onclick="changeStatus(this,'confirmed')">Confirm</button></td></tr>
-          <tr><td>Lorraine Dela Cruz</td><td>Debut</td><td>Wavecrest Garden</td><td>May 3, 2025</td><td><span class="status-badge status-confirmed">Confirmed</span></td><td><button class="tbl-btn tbl-cancel" onclick="changeStatus(this,'cancelled')">Cancel</button></td></tr>
-          <tr><td>Raphael Tan</td><td>Corporate Gala</td><td>Pearl Ballroom</td><td>Jun 20, 2025</td><td><span class="status-badge status-pending">Pending</span></td><td><button class="tbl-btn tbl-confirm" onclick="changeStatus(this,'confirmed')">Confirm</button></td></tr>
-          <tr><td>Maria Reyes</td><td>Birthday</td><td>Tidal Pool Terrace</td><td>Jul 8, 2025</td><td><span class="status-badge status-confirmed">Confirmed</span></td><td><button class="tbl-btn tbl-cancel" onclick="changeStatus(this,'cancelled')">Cancel</button></td></tr>
-          <tr><td>Jose Ramos</td><td>Anniversary</td><td>Wavecrest Garden</td><td>Aug 15, 2025</td><td><span class="status-badge status-cancelled">Cancelled</span></td><td style="color:#ccc;">—</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="panel-section-title">Registered Customers</div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Full Name</th><th>Email</th><th>Phone</th><th>Registered</th></tr></thead>
-        <tbody id="adminUsersBody"><tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:30px;">No registered customers yet.</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- CUSTOMER PANEL -->
-<div class="customer-panel" id="customerPanel">
-  <div class="customer-topbar">
-    <div class="customer-topbar-title">9 Waves <em>My Account</em></div>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <span id="customerDisplayName" style="font-size:13px;color:var(--text-light);"></span>
-      <button class="cust-signout" onclick="signOut()">Sign Out</button>
-    </div>
-  </div>
-  <div class="customer-body">
-    <div class="panel-welcome">
-      <h2>Welcome, <em id="customerGreet">Guest</em> 🌊</h2>
-      <p>Manage your profile and explore our beautiful event spaces.</p>
-    </div>
-    <div class="cust-cards">
-      <div class="cust-card">
-        <div class="cust-card-title">My Profile</div>
-        <div class="cust-card-sub">Your account information</div>
-        <div id="customerProfileInfo"></div>
-      </div>
-      <div class="cust-card">
-        <div class="cust-card-title">My Bookings</div>
-        <div class="cust-card-sub">Your upcoming events</div>
-        <p style="font-size:14px;color:var(--text-light);font-weight:300;line-height:1.7;">No active bookings yet. Browse our venues and packages to start planning your dream celebration.</p>
-        <br>
-        <button class="panel-btn panel-btn-gold" onclick="closePanelGoTo('venues')">Explore Venues →</button>
-      </div>
-    </div>
-    <div class="cust-cta-card">
-      <h3>Ready to Book Your <em>Dream Event?</em></h3>
-      <p>Our events team is here to make your celebration unforgettable. Send us an inquiry and we'll get back to you within 24 hours.</p>
-      <button class="panel-btn panel-btn-outline-white" onclick="closePanelGoTo('contact')">Send an Inquiry →</button>
-    </div>
-  </div>
-</div>
-
-<!-- NAV -->
-<nav id="navbar">
-  <a href="#" class="nav-logo">9 Waves Events Place</a>
-  <ul class="nav-links" id="navLinks">
-    <li><a href="#about">About</a></li>
-    <li><a href="#venues">Venues</a></li>
-    <li><a href="#packages">Packages</a></li>
-    <li><a href="#gallery">Gallery</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li id="navAuthArea"><button class="nav-cta" onclick="openAuth()">Sign In</button></li>
-  </ul>
-  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-</nav>
-
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobileMenu">
-  <button class="mobile-close" id="mobileClose">✕</button>
-  <a href="#about" onclick="closeMobile()">About</a>
-  <a href="#venues" onclick="closeMobile()">Venues</a>
-  <a href="#packages" onclick="closeMobile()">Packages</a>
-  <a href="#gallery" onclick="closeMobile()">Gallery</a>
-  <a href="#contact" onclick="closeMobile()">Book Now</a>
-  <a href="#" id="mobileAuthLink" onclick="openAuth();closeMobile();">Sign In</a>
-</div>
-
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-bg"></div><div class="hero-overlay"></div>
-  <div id="petals"></div>
-  <div class="hero-content">
-    <div class="hero-badge">✦ Where Every Moment Becomes a Memory ✦</div>
-    <h1>9 Waves <em>Events</em><br>Place</h1>
-    <p class="hero-subtitle">Elegant Celebrations · Nature-Inspired Venue · Taguig, Philippines</p>
-    <div class="hero-btns">
-      <a href="#venues" class="btn-primary">Explore Venues</a>
-      <a href="#contact" class="btn-outline">Inquire Now</a>
-    </div>
-  </div>
-  <div class="scroll-indicator"><span>Scroll</span><div class="scroll-line"></div></div>
-  <div class="wave-deco"><svg viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,80 C240,120 480,40 720,80 C960,120 1200,40 1440,80 L1440,120 L0,120 Z" fill="#f9f5ef"/></svg></div>
-</section>
-
-<!-- ABOUT -->
-<section class="about" id="about">
-  <div class="about-text reveal">
-    <div class="section-label">Our Story</div>
-    <h2 class="section-title">A Garden Sanctuary for <em>Life's Finest</em> Celebrations</h2>
-    <p>Nestled in the heart of the city, 9 Waves Events Place is where nature meets elegance. Our lush, wave-inspired gardens and versatile event spaces create the perfect backdrop for weddings, debuts, corporate gatherings, and intimate celebrations.</p>
-    <p>We believe every event should feel like a journey — one that flows naturally, like waves, from one beautiful moment to the next.</p>
-    <div class="about-stats">
-      <div class="stat"><div class="stat-number">9+</div><div class="stat-label">Event Spaces</div></div>
-      <div class="stat"><div class="stat-number">500+</div><div class="stat-label">Events Hosted</div></div>
-      <div class="stat"><div class="stat-number">12</div><div class="stat-label">Years of Service</div></div>
-      <div class="stat"><div class="stat-number">100%</div><div class="stat-label">Client Satisfaction</div></div>
-    </div>
-  </div>
-  <div class="about-visual reveal">
-    <div class="about-img-main" style="background: url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover; "><div class="garden-illustration"></div></div>
-    <div class="about-img-accent">"Where 9 waves of joy carry your celebration to shore"</div>
-  </div>
-</section>
-
-<!-- VENUES -->
-<section class="venues" id="venues">
-  <div class="section-label" style="justify-content:center">Our Spaces</div>
-  <h2 class="section-title reveal">Discover Our <em>Venue Collection</em></h2>
-  <p class="venues-intro reveal">Nine distinct spaces, each inspired by the rhythms of the sea and the serenity of nature.</p>
-  <div class="venues-grid reveal">
-    <div class="venue-card"><div class="venue-img"><div class="venue-img-bg" style="background:url('https://images.unsplash.com/photo-1533664426540-cb64a78122c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;"></div></div><div class="venue-info"><div class="venue-tag">Garden Venue</div><div class="venue-name">The Wavecrest Garden</div><div class="venue-desc">An open-air garden bathed in natural light, adorned with lush greenery and blooming florals — perfect for outdoor ceremonies.</div><div class="venue-meta"><div class="venue-meta-item"><span>👥</span> Up to 300 guests</div><div class="venue-meta-item"><span>🌤️</span> Outdoor</div></div></div><div class="venue-overlay"><div class="venue-overlay-text">The Wavecrest Garden</div><a href="#contact">Book This Venue</a></div></div>
-    <div class="venue-card"><div class="venue-img"><div class="venue-img-bg" style="background:url('https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;"></div></div><div class="venue-info"><div class="venue-tag">Ballroom</div><div class="venue-name">The Pearl Ballroom</div><div class="venue-desc">Opulent interiors with soaring ceilings, crystal chandeliers, and elegant drapery — a timeless setting for grand celebrations.</div><div class="venue-meta"><div class="venue-meta-item"><span>👥</span> Up to 500 guests</div><div class="venue-meta-item"><span>🏛️</span> Indoor</div></div></div><div class="venue-overlay"><div class="venue-overlay-text">The Pearl Ballroom</div><a href="#contact">Book This Venue</a></div></div>
-    <div class="venue-card"><div class="venue-img"><div class="venue-img-bg" style="background:url('https://images.unsplash.com/photo-1545638209-0d86e92baae6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;"></div></div><div class="venue-info"><div class="venue-tag">Poolside</div><div class="venue-name">Tidal Pool Terrace</div><div class="venue-desc">A stunning poolside terrace with shimmering waters and twilight ambiance — ideal for cocktail parties and intimate gatherings.</div><div class="venue-meta"><div class="venue-meta-item"><span>👥</span> Up to 150 guests</div><div class="venue-meta-item"><span>🌅</span> Semi-outdoor</div></div></div><div class="venue-overlay"><div class="venue-overlay-text">Tidal Pool Terrace</div><a href="#contact">Book This Venue</a></div></div>
-  </div>
-</section>
-
-<!-- PACKAGES -->
-<section class="packages" id="packages">
-  <div class="packages-header"><div><div class="section-label">What We Offer</div><h2 class="section-title">Curated <em>Event Packages</em></h2></div><p class="packages-intro">Thoughtfully designed packages to make your celebration effortless and unforgettable. All packages are customizable.</p></div>
-  <div class="packages-grid reveal">
-    <div class="package-card"><div class="package-icon">🌸</div><div class="package-name">Ripple</div><div class="package-price">Starting at ₱45,000</div><ul class="package-features"><li>Venue use for 8 hours</li><li>Basic floral arrangement</li><li>Tables & chairs for 100 pax</li><li>Sound system & microphone</li><li>One dedicated coordinator</li><li>Free parking for guests</li></ul><a href="#contact" class="package-btn">Get This Package</a></div>
-    <div class="package-card featured"><div class="package-badge">Most Popular</div><div class="package-icon">🌊</div><div class="package-name">Crest</div><div class="package-price">Starting at ₱85,000</div><ul class="package-features"><li>Venue use for 12 hours</li><li>Premium floral & styling</li><li>Tables & chairs for 200 pax</li><li>Full audio-visual setup</li><li>Two coordinators on-site</li><li>Catering coordination</li><li>Complimentary bridal suite</li><li>Photo wall backdrop</li></ul><a href="#contact" class="package-btn">Get This Package</a></div>
-    <div class="package-card"><div class="package-icon">🏖️</div><div class="package-name">Sovereign Wave</div><div class="package-price">Starting at ₱150,000</div><ul class="package-features"><li>Exclusive venue for the day</li><li>Luxury bespoke styling</li><li>Unlimited guest capacity</li><li>Complete A/V production</li><li>Full planning team</li><li>In-house catering (500 pax)</li><li>Overnight accommodation</li><li>Photo & video coverage</li></ul><a href="#contact" class="package-btn">Get This Package</a></div>
-  </div>
-</section>
-
-<!-- GALLERY -->
-<section class="gallery" id="gallery">
-  <div class="gallery-header"><div><div class="section-label">Our Portfolio</div><h2 class="section-title">Moments We've <em>Cherished</em></h2></div><a href="#contact" class="gallery-link">View All Events →</a></div>
-  <div class="gallery-strip" id="galleryStrip">
-    <div class="gallery-item" style="width:380px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Wedding Reception</div></div>
-    <div class="gallery-item" style="width:260px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1522416467008-01d7ed0641df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Debut Celebration</div></div>
-    <div class="gallery-item" style="width:320px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1469371670807-013ccf39f2a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Corporate Event</div></div>
-    <div class="gallery-item" style="width:300px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Garden Wedding</div></div>
-    <div class="gallery-item" style="width:350px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Outdoor Ceremony</div></div>
-    <div class="gallery-item" style="width:280px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1530103862676-de88d1dbe6ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Birthday Party</div></div>
-    <div class="gallery-item" style="width:320px;height:280px;"><div class="gallery-bg" style="background:url('https://images.unsplash.com/photo-1470229722913-7c090be5f56b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;"></div><div class="gallery-item-label">Anniversary Gala</div></div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section class="testimonials" id="testimonials">
-  <div class="testimonials-inner">
-    <div class="testimonials-header"><div class="section-label" style="justify-content:center">What They Say</div><h2 class="section-title reveal">Stories from Our <em>Happy Couples</em></h2></div>
-    <div class="testimonials-grid reveal">
-      <div class="testimonial-card"><div class="testimonial-stars">★★★★★</div><div class="testimonial-text">"9 Waves made our wedding day absolutely magical. The garden was stunning, the staff was incredibly attentive, and every detail was perfect."</div><div class="testimonial-author"><div class="testimonial-avatar">A</div><div><div class="testimonial-name">Andrea & Miguel Santos</div><div class="testimonial-event">Wedding Reception, March 2025</div></div></div></div>
-      <div class="testimonial-card"><div class="testimonial-stars">★★★★★</div><div class="testimonial-text">"For my daughter's debut, we wanted something truly special. 9 Waves exceeded every expectation — the floral arrangements, the lighting, the service!"</div><div class="testimonial-author"><div class="testimonial-avatar">L</div><div><div class="testimonial-name">Lorraine Dela Cruz</div><div class="testimonial-event">Debut Celebration, January 2025</div></div></div></div>
-      <div class="testimonial-card"><div class="testimonial-stars">★★★★★</div><div class="testimonial-text">"Our company's annual gala was held at the Pearl Ballroom and it was phenomenal. Professional team, beautiful setup, seamless execution!"</div><div class="testimonial-author"><div class="testimonial-avatar">R</div><div><div class="testimonial-name">Raphael Tan, CEO</div><div class="testimonial-event">Corporate Gala, December 2024</div></div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section class="contact" id="contact">
-  <div class="contact-inner">
-    <div class="contact-info">
-      <div class="section-label">Get In Touch</div>
-      <h2 class="section-title">Begin Your <em>Journey</em> With Us</h2>
-      <p>Ready to create something extraordinary? Reach out to our events team and let's bring your vision to life.</p>
-      <div class="contact-details">
-        <div class="contact-item"><div class="contact-icon">📍</div><div><div class="contact-item-label">Location</div><div class="contact-item-value">123 Lakeview Drive, BGC, Taguig City, Metro Manila</div></div></div>
-        <div class="contact-item"><div class="contact-icon">📞</div><div><div class="contact-item-label">Phone</div><div class="contact-item-value">+63 917 123 4567 | +63 2 8765 4321</div></div></div>
-        <div class="contact-item"><div class="contact-icon">✉️</div><div><div class="contact-item-label">Email</div><div class="contact-item-value">events@9waveseventsplace.com</div></div></div>
-        <div class="contact-item"><div class="contact-icon">🕐</div><div><div class="contact-item-label">Office Hours</div><div class="contact-item-value">Monday – Sunday, 9:00 AM – 7:00 PM</div></div></div>
-      </div>
-    </div>
-    <div class="contact-form">
-      <form id="inquiryForm">
-        <div class="form-row">
-          <div class="form-group"><label for="inqFirst">First Name</label><input type="text" id="inqFirst" placeholder="Maria" required></div>
-          <div class="form-group"><label for="inqLast">Last Name</label><input type="text" id="inqLast" placeholder="Santos" required></div>
+      <!-- REGISTER -->
+      <div class="auth-panel" id="panel-register">
+        <h2 class="auth-title">Join <em>9 Waves</em></h2>
+        <p class="auth-subtitle">Create your account to start planning your perfect celebration.</p>
+        <div class="auth-reg-row">
+          <div class="auth-group"><label for="regFirst">First Name</label><input type="text" id="regFirst"
+              placeholder="Maria"></div>
+          <div class="auth-group"><label for="regLast">Last Name</label><input type="text" id="regLast"
+              placeholder="Santos"></div>
         </div>
-        <div class="form-group"><label for="inqEmail">Email Address</label><input type="email" id="inqEmail" placeholder="maria@email.com" required></div>
-        <div class="form-group"><label for="inqPhone">Contact Number</label><input type="tel" id="inqPhone" placeholder="+63 917 000 0000"></div>
-        <div class="form-row">
-          <div class="form-group"><label for="inqEvent">Event Type</label><select id="inqEvent" required><option value="" disabled selected>Select event</option><option>Wedding</option><option>Debut / 18th Birthday</option><option>Birthday Celebration</option><option>Corporate Event</option><option>Baptism / Christening</option><option>Anniversary</option><option>Other</option></select></div>
-          <div class="form-group"><label for="inqVenue">Preferred Venue</label><select id="inqVenue"><option value="" disabled selected>Select venue</option><option>Wavecrest Garden</option><option>Pearl Ballroom</option><option>Tidal Pool Terrace</option><option>Not Sure Yet</option></select></div>
-        </div>
-        <div class="form-group"><label for="inqDate">Event Date</label><input type="date" id="inqDate"></div>
-        <div class="form-group"><label for="inqMessage">Message</label><textarea id="inqMessage" placeholder="Tell us about your dream event..."></textarea></div>
-        <button type="submit" class="form-submit">Send Inquiry ✦</button>
-      </form>
+        <div class="auth-group"><label for="regEmail">Email Address</label><input type="email" id="regEmail"
+            placeholder="your@email.com"></div>
+        <div class="auth-group"><label for="regPhone">Contact Number</label><input type="tel" id="regPhone"
+            placeholder="+63 917 000 0000"></div>
+        <div class="auth-group"><label for="regPassword">Password</label><input type="password" id="regPassword"
+            placeholder="Minimum 6 characters"></div>
+        <div class="auth-group"><label for="regConfirm">Confirm Password</label><input type="password" id="regConfirm"
+            placeholder="Re-enter password"></div>
+        <div class="auth-error" id="regError"></div>
+        <button class="auth-btn" id="registerBtn">Create Account ✦</button>
+        <p class="auth-footer-text">Already have an account? <a href="#" id="goLogin">Sign in</a></p>
+      </div>
     </div>
   </div>
-</section>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-logo">9 Waves <em>Events Place</em></div>
-    <div class="footer-links"><a href="#about">About</a><a href="#venues">Venues</a><a href="#packages">Packages</a><a href="#gallery">Gallery</a><a href="#contact">Contact</a></div>
-    <div class="footer-social"><a href="#" class="social-btn">f</a><a href="#" class="social-btn">ig</a><a href="#" class="social-btn">yt</a></div>
+  <!-- CONFIRM MODAL -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-modal">
+      <div class="confirm-brand">✦ Action Required</div>
+      <h2 class="confirm-title" id="confirmTitle">Confirm Action</h2>
+      <p class="confirm-msg" id="confirmMsg">Are you sure you want to proceed?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn confirm-no" id="confirmNo">Keep Booking</button>
+        <button class="confirm-btn confirm-yes" id="confirmYes">Yes, Cancel</button>
+      </div>
+    </div>
   </div>
-  <div class="footer-bottom">
-    <span>© 2025 9 Waves Events Place. All rights reserved.</span>
-    <span>Taguig City, Metro Manila, Philippines</span>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-topbar">
+      <div class="admin-topbar-title">9 Waves <em>Admin Dashboard</em></div>
+      <div class="admin-topbar-right">
+        <div class="admin-chip">
+          <div class="admin-chip-avatar">🔐</div>
+          <span id="adminDisplayName">Admin</span>
+        </div>
+        <button class="panel-signout" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+    <div class="admin-body">
+      <div class="panel-welcome">
+        <h2>Good day, <em id="adminGreet">Admin</em> 👋</h2>
+        <p>Here's a live overview of your venue operations and bookings.</p>
+      </div>
+      <div class="admin-stats-row">
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="statBookings">5</div>
+          <div class="admin-stat-lbl">Total Bookings</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="statPending">3</div>
+          <div class="admin-stat-lbl">Pending Inquiries</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num">3</div>
+          <div class="admin-stat-lbl">Venues Available</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="statUsers">0</div>
+          <div class="admin-stat-lbl">Registered Customers</div>
+        </div>
+      </div>
+
+      <!-- ADMIN ANALYTICS -->
+      <div class="panel-section-title">Business Analytics</div>
+      <div class="admin-charts-row">
+        <div class="admin-chart-card">
+          <div class="admin-chart-title">Booking Trends</div>
+          <canvas id="bookingTrendChart"></canvas>
+        </div>
+        <div class="admin-chart-card">
+          <div class="admin-chart-title">Event Type Distribution</div>
+          <canvas id="eventTypeChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel-section-title">Inquiries & Bookings</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Event Type</th>
+              <th>Venue</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminBookingsBody">
+            <tr>
+              <td>Andrea Santos</td>
+              <td>Wedding</td>
+              <td>Pearl Ballroom</td>
+              <td>Apr 12, 2025</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td><button class="tbl-btn tbl-confirm" onclick="changeStatus(this,'confirmed')">Confirm</button></td>
+            </tr>
+            <tr>
+              <td>Lorraine Dela Cruz</td>
+              <td>Debut</td>
+              <td>Wavecrest Garden</td>
+              <td>May 3, 2025</td>
+              <td><span class="status-badge status-confirmed">Confirmed</span></td>
+              <td><button class="tbl-btn tbl-cancel" onclick="changeStatus(this,'cancelled')">Cancel</button></td>
+            </tr>
+            <tr>
+              <td>Raphael Tan</td>
+              <td>Corporate Gala</td>
+              <td>Pearl Ballroom</td>
+              <td>Jun 20, 2025</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td><button class="tbl-btn tbl-confirm" onclick="changeStatus(this,'confirmed')">Confirm</button></td>
+            </tr>
+            <tr>
+              <td>Maria Reyes</td>
+              <td>Birthday</td>
+              <td>Tidal Pool Terrace</td>
+              <td>Jul 8, 2025</td>
+              <td><span class="status-badge status-confirmed">Confirmed</span></td>
+              <td><button class="tbl-btn tbl-cancel" onclick="changeStatus(this,'cancelled')">Cancel</button></td>
+            </tr>
+            <tr>
+              <td>Jose Ramos</td>
+              <td>Anniversary</td>
+              <td>Wavecrest Garden</td>
+              <td>Aug 15, 2025</td>
+              <td><span class="status-badge status-cancelled">Cancelled</span></td>
+              <td style="color:#ccc;">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-section-title">Registered Customers</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Registered</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersBody">
+            <tr>
+              <td colspan="4" style="text-align:center;color:var(--text-light);padding:30px;">No registered customers
+                yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</footer>
 
-<div class="toast" id="toast"></div>
+  <!-- CUSTOMER PANEL -->
+  <div class="customer-panel" id="customerPanel">
+    <div class="customer-topbar">
+      <div class="customer-topbar-title">9 Waves <em>My Account</em></div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span id="customerDisplayName" style="font-size:13px;color:var(--text-light);"></span>
+        <button class="cust-signout" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+    <div class="customer-body">
+      <div class="panel-welcome">
+        <h2>Welcome, <em id="customerGreet">Guest</em> 🌊</h2>
+        <p>Manage your profile and explore our beautiful event spaces.</p>
+      </div>
+      <div class="cust-cards">
+        <div class="cust-card">
+          <div class="cust-card-title">My Profile</div>
+          <div class="cust-card-sub">Your account information</div>
+          <div id="customerProfileInfo"></div>
+        </div>
+        <div class="cust-card">
+          <div class="cust-card-title">My Bookings</div>
+          <div class="cust-card-sub">Your upcoming events</div>
+          <p style="font-size:14px;color:var(--text-light);font-weight:300;line-height:1.7;">No active bookings yet.
+            Browse our venues and packages to start planning your dream celebration.</p>
+          <br>
+          <button class="panel-btn panel-btn-gold" onclick="closePanelGoTo('venues')">Explore Venues →</button>
+        </div>
+      </div>
+      <div class="cust-cta-card">
+        <h3>Ready to Book Your <em>Dream Event?</em></h3>
+        <p>Our events team is here to make your celebration unforgettable. Send us an inquiry and we'll get back to you
+          within 24 hours.</p>
+        <button class="panel-btn panel-btn-outline-white" onclick="closePanelGoTo('contact')">Send an Inquiry →</button>
+      </div>
+    </div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="script.js"></script>
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">9 Waves Events Place</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#about">About</a></li>
+      <li><a href="#venues">Venues</a></li>
+      <li><a href="#packages">Packages</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li id="navAuthArea"><button class="nav-cta" onclick="openAuth()">Sign In</button></li>
+    </ul>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" id="mobileClose">✕</button>
+    <a href="#about" onclick="closeMobile()">About</a>
+    <a href="#venues" onclick="closeMobile()">Venues</a>
+    <a href="#packages" onclick="closeMobile()">Packages</a>
+    <a href="#gallery" onclick="closeMobile()">Gallery</a>
+    <a href="#contact" onclick="closeMobile()">Book Now</a>
+    <a href="#" id="mobileAuthLink" onclick="openAuth();closeMobile();">Sign In</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div id="petals"></div>
+    <div class="hero-content">
+      <div class="hero-badge">✦ Where Every Moment Becomes a Memory ✦</div>
+      <h1>9 Waves <em>Events</em><br>Place</h1>
+      <p class="hero-subtitle">Elegant Celebrations · Nature-Inspired Venue · Taguig, Philippines</p>
+      <div class="hero-btns">
+        <a href="#venues" class="btn-primary">Explore Venues</a>
+        <a href="#contact" class="btn-outline">Inquire Now</a>
+      </div>
+    </div>
+    <div class="scroll-indicator"><span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+    <div class="wave-deco"><svg viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,80 C240,120 480,40 720,80 C960,120 1200,40 1440,80 L1440,120 L0,120 Z" fill="#f9f5ef" />
+      </svg></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about">
+    <div class="about-text reveal">
+      <div class="section-label">Our Story</div>
+      <h2 class="section-title">A Garden Sanctuary for <em>Life's Finest</em> Celebrations</h2>
+      <p>Nestled in the heart of the city, 9 Waves Events Place is where nature meets elegance. Our lush, wave-inspired
+        gardens and versatile event spaces create the perfect backdrop for weddings, debuts, corporate gatherings, and
+        intimate celebrations.</p>
+      <p>We believe every event should feel like a journey — one that flows naturally, like waves, from one beautiful
+        moment to the next.</p>
+      <div class="about-stats">
+        <div class="stat">
+          <div class="stat-number">9+</div>
+          <div class="stat-label">Event Spaces</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">Events Hosted</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Years of Service</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Client Satisfaction</div>
+        </div>
+      </div>
+    </div>
+    <div class="about-visual reveal">
+      <div class="about-img-main"
+        style="background: url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover; ">
+        <div class="garden-illustration"></div>
+      </div>
+      <div class="about-img-accent">"Where 9 waves of joy carry your celebration to shore"</div>
+    </div>
+  </section>
+
+  <!-- VENUES -->
+  <section class="venues" id="venues">
+    <div class="section-label" style="justify-content:center">Our Spaces</div>
+    <h2 class="section-title reveal">Discover Our <em>Venue Collection</em></h2>
+    <p class="venues-intro reveal">Nine distinct spaces, each inspired by the rhythms of the sea and the serenity of
+      nature.</p>
+    <div class="venues-grid reveal">
+      <div class="venue-card">
+        <div class="venue-img">
+          <div class="venue-img-bg"
+            style="background:url('https://images.unsplash.com/photo-1533664426540-cb64a78122c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;">
+          </div>
+        </div>
+        <div class="venue-info">
+          <div class="venue-tag">Garden Venue</div>
+          <div class="venue-name">The Wavecrest Garden</div>
+          <div class="venue-desc">An open-air garden bathed in natural light, adorned with lush greenery and blooming
+            florals — perfect for outdoor ceremonies.</div>
+          <div class="venue-meta">
+            <div class="venue-meta-item"><span>👥</span> Up to 300 guests</div>
+            <div class="venue-meta-item"><span>🌤️</span> Outdoor</div>
+          </div>
+        </div>
+        <div class="venue-overlay">
+          <div class="venue-overlay-text">The Wavecrest Garden</div><a href="#contact">Book This Venue</a>
+        </div>
+      </div>
+      <div class="venue-card">
+        <div class="venue-img">
+          <div class="venue-img-bg"
+            style="background:url('https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;">
+          </div>
+        </div>
+        <div class="venue-info">
+          <div class="venue-tag">Ballroom</div>
+          <div class="venue-name">The Pearl Ballroom</div>
+          <div class="venue-desc">Opulent interiors with soaring ceilings, crystal chandeliers, and elegant drapery — a
+            timeless setting for grand celebrations.</div>
+          <div class="venue-meta">
+            <div class="venue-meta-item"><span>👥</span> Up to 500 guests</div>
+            <div class="venue-meta-item"><span>🏛️</span> Indoor</div>
+          </div>
+        </div>
+        <div class="venue-overlay">
+          <div class="venue-overlay-text">The Pearl Ballroom</div><a href="#contact">Book This Venue</a>
+        </div>
+      </div>
+      <div class="venue-card">
+        <div class="venue-img">
+          <div class="venue-img-bg"
+            style="background:url('https://images.unsplash.com/photo-1545638209-0d86e92baae6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;">
+          </div>
+        </div>
+        <div class="venue-info">
+          <div class="venue-tag">Poolside</div>
+          <div class="venue-name">Tidal Pool Terrace</div>
+          <div class="venue-desc">A stunning poolside terrace with shimmering waters and twilight ambiance — ideal for
+            cocktail parties and intimate gatherings.</div>
+          <div class="venue-meta">
+            <div class="venue-meta-item"><span>👥</span> Up to 150 guests</div>
+            <div class="venue-meta-item"><span>🌅</span> Semi-outdoor</div>
+          </div>
+        </div>
+        <div class="venue-overlay">
+          <div class="venue-overlay-text">Tidal Pool Terrace</div><a href="#contact">Book This Venue</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PACKAGES -->
+  </section>
+
+  <!-- ESTIMATOR -->
+  <section class="estimator" id="estimator">
+    <div class="estimator-header">
+      <div class="section-label" style="justify-content:center">Plan Your Budget</div>
+      <h2 class="section-title reveal" style="text-align:center">Event <em>Cost Estimator</em></h2>
+      <p class="estimator-intro reveal">Get a personalized estimate for your dream celebration. Adjust the guest count and add your desired services.</p>
+    </div>
+    
+    <div class="estimator-container reveal">
+      <div class="estimator-controls">
+        <div class="est-group">
+          <label for="estPackage">Select Base Package</label>
+          <select id="estPackage">
+            <option value="ripple">Ripple Pack (₱45,000)</option>
+            <option value="crest" selected>Crest Pack (₱85,000)</option>
+            <option value="sovereign">Sovereign Wave (₱150,000)</option>
+          </select>
+        </div>
+
+        <div class="est-group">
+          <label for="estGuests">Estimated Guest Count: <span id="guestCountLabel">200</span></label>
+          <input type="range" id="estGuests" min="50" max="1000" step="50" value="200" class="est-range">
+        </div>
+
+        <div class="est-group">
+          <label>Optional Add-ons</label>
+          <div class="est-grid">
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="5000" value="extra-hour">
+              <span class="est-checkmark"></span> Extra Event Hour (₱5,000)
+            </label>
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="8000" value="cake">
+              <span class="est-checkmark"></span> 3-Tier Wedding Cake (₱8,000)
+            </label>
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="12000" value="coordinator">
+              <span class="est-checkmark"></span> Full Event Coordination (₱12,000)
+            </label>
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="15000" value="av-upgrade">
+              <span class="est-checkmark"></span> Pro A/V Upgrade (₱15,000)
+            </label>
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="10000" value="photo-wall">
+              <span class="est-checkmark"></span> Flower Wall Backdrop (₱10,000)
+            </label>
+            <label class="est-check-container">
+              <input type="checkbox" class="est-addon" data-price="25000" value="overnight">
+              <span class="est-checkmark"></span> Overnight Accommodation (₱25,000)
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="estimator-result">
+        <div class="total-box">
+          <div class="total-label">Estimated Grand Total</div>
+          <div class="total-price" id="totalPrice">₱85,000</div>
+          <div class="total-sub">*Prices may vary based on specific customization.</div>
+        </div>
+        <div class="total-breakdown">
+          <h3>Booking Summary</h3>
+          <p id="estSummary">Crest Package (200 Guests)</p>
+          <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="closePanelGoTo('contact')">Inquire for this Plan →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section class="gallery" id="gallery">
+    <div class="gallery-header">
+      <div>
+        <div class="section-label">Our Portfolio</div>
+        <h2 class="section-title">Moments We've <em>Cherished</em></h2>
+      </div><a href="#contact" class="gallery-link">View All Events →</a>
+    </div>
+    <div class="gallery-strip" id="galleryStrip">
+      <div class="gallery-item" style="width:380px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Wedding Reception</div>
+      </div>
+      <div class="gallery-item" style="width:260px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1522416467008-01d7ed0641df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Debut Celebration</div>
+      </div>
+      <div class="gallery-item" style="width:320px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1469371670807-013ccf39f2a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Corporate Event</div>
+      </div>
+      <div class="gallery-item" style="width:300px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Garden Wedding</div>
+      </div>
+      <div class="gallery-item" style="width:350px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Outdoor Ceremony</div>
+      </div>
+      <div class="gallery-item" style="width:280px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1530103862676-de88d1dbe6ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Birthday Party</div>
+      </div>
+      <div class="gallery-item" style="width:320px;height:280px;">
+        <div class="gallery-bg"
+          style="background:url('https://images.unsplash.com/photo-1470229722913-7c090be5f56b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80') center/cover;width:100%;height:100%;">
+        </div>
+        <div class="gallery-item-label">Anniversary Gala</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials" id="testimonials">
+    <div class="testimonials-inner">
+      <div class="testimonials-header">
+        <div class="section-label" style="justify-content:center">What They Say</div>
+        <h2 class="section-title reveal">Stories from Our <em>Happy Couples</em></h2>
+      </div>
+      <div class="testimonials-grid reveal">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"9 Waves made our wedding day absolutely magical. The garden was stunning, the
+            staff was incredibly attentive, and every detail was perfect."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">A</div>
+            <div>
+              <div class="testimonial-name">Andrea & Miguel Santos</div>
+              <div class="testimonial-event">Wedding Reception, March 2025</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"For my daughter's debut, we wanted something truly special. 9 Waves exceeded
+            every expectation — the floral arrangements, the lighting, the service!"</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">L</div>
+            <div>
+              <div class="testimonial-name">Lorraine Dela Cruz</div>
+              <div class="testimonial-event">Debut Celebration, January 2025</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★★★★</div>
+          <div class="testimonial-text">"Our company's annual gala was held at the Pearl Ballroom and it was phenomenal.
+            Professional team, beautiful setup, seamless execution!"</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">R</div>
+            <div>
+              <div class="testimonial-name">Raphael Tan, CEO</div>
+              <div class="testimonial-event">Corporate Gala, December 2024</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AVAILABILITY CALENDAR -->
+  <section class="availability" id="availability">
+    <div class="availability-header">
+      <div class="section-label" style="justify-content:center">Plan Your Date</div>
+      <h2 class="section-title reveal" style="text-align:center">Check <em>Availability</em></h2>
+      <p class="availability-intro reveal">Our venues book up fast during peak seasons. Browse our real-time calendar to find your perfect event date.</p>
+    </div>
+    <div class="availability-grid reveal">
+      <div id="availabilityCal"></div>
+      <div class="availability-info">
+        <h3>Calendar Legend</h3>
+        <ul class="legend-list">
+          <li><span class="legend-dot status-available"></span> Available Date</li>
+          <li><span class="legend-dot status-booked"></span> Confirmed Event</li>
+          <li><span class="legend-dot status-pending"></span> Pending Inquiries</li>
+        </ul>
+        <p class="availability-note">Found a free date? Head over to our contact form to secure your reservation!</p>
+        <button class="btn-outline" style="width:100%" onclick="closePanelGoTo('contact')">Book Now →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="contact-inner">
+      <div class="contact-info">
+        <div class="section-label">Get In Touch</div>
+        <h2 class="section-title">Begin Your <em>Journey</em> With Us</h2>
+        <p>Ready to create something extraordinary? Reach out to our events team and let's bring your vision to life.
+        </p>
+        <div class="contact-details">
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <div>
+              <div class="contact-item-label">Location</div>
+              <div class="contact-item-value">123 Lakeview Drive, BGC, Taguig City, Metro Manila</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📞</div>
+            <div>
+              <div class="contact-item-label">Phone</div>
+              <div class="contact-item-value">+63 917 123 4567 | +63 2 8765 4321</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">✉️</div>
+            <div>
+              <div class="contact-item-label">Email</div>
+              <div class="contact-item-value">events@9waveseventsplace.com</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">🕐</div>
+            <div>
+              <div class="contact-item-label">Office Hours</div>
+              <div class="contact-item-value">Monday – Sunday, 9:00 AM – 7:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form">
+        <form id="inquiryForm">
+          <div class="form-row">
+            <div class="form-group"><label for="inqFirst">First Name</label><input type="text" id="inqFirst"
+                placeholder="Maria" required></div>
+            <div class="form-group"><label for="inqLast">Last Name</label><input type="text" id="inqLast"
+                placeholder="Santos" required></div>
+          </div>
+          <div class="form-group"><label for="inqEmail">Email Address</label><input type="email" id="inqEmail"
+              placeholder="maria@email.com" required></div>
+          <div class="form-group"><label for="inqPhone">Contact Number</label><input type="tel" id="inqPhone"
+              placeholder="+63 917 000 0000"></div>
+          <div class="form-row">
+            <div class="form-group"><label for="inqEvent">Event Type</label><select id="inqEvent" required>
+                <option value="" disabled selected>Select event</option>
+                <option>Wedding</option>
+                <option>Debut / 18th Birthday</option>
+                <option>Birthday Celebration</option>
+                <option>Corporate Event</option>
+                <option>Baptism / Christening</option>
+                <option>Anniversary</option>
+                <option>Other</option>
+              </select></div>
+            <div class="form-group"><label for="inqVenue">Preferred Venue</label><select id="inqVenue">
+                <option value="" disabled selected>Select venue</option>
+                <option>Wavecrest Garden</option>
+                <option>Pearl Ballroom</option>
+                <option>Tidal Pool Terrace</option>
+                <option>Not Sure Yet</option>
+              </select></div>
+          </div>
+          <div class="form-group"><label for="inqDate">Event Date</label><input type="date" id="inqDate"></div>
+          <div class="form-group"><label for="inqMessage">Message</label><textarea id="inqMessage"
+              placeholder="Tell us about your dream event..."></textarea></div>
+          <button type="submit" class="form-submit">Send Inquiry ✦</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">9 Waves <em>Events Place</em></div>
+      <div class="footer-links"><a href="#about">About</a><a href="#venues">Venues</a><a href="#packages">Packages</a><a
+          href="#gallery">Gallery</a><a href="#contact">Contact</a></div>
+      <div class="footer-social"><a href="#" class="social-btn">f</a><a href="#" class="social-btn">ig</a><a href="#"
+          class="social-btn">yt</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 9 Waves Events Place. All rights reserved.</span>
+      <span>Taguig City, Metro Manila, Philippines</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">×</button>
+    <div class="lightbox-content">
+      <img src="" id="lightboxImage" alt="Gallery View">
+      <div class="lightbox-caption" id="lightboxCaption">Wedding Reception</div>
+    </div>
+    <div class="lightbox-nav">
+      <button id="lbPrev">‹</button>
+      <button id="lbNext">›</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

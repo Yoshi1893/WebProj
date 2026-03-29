@@ -1915,3 +1915,423 @@ footer {
 .form-submit:active {
   transform: translateY(1px) scale(0.98);
 }
+
+/* --- LIGHTBOX --- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.lightbox.open {
+  display: flex;
+  opacity: 1;
+}
+.lightbox-close {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  background: none;
+  border: none;
+  font-size: 50px;
+  color: white;
+  cursor: pointer;
+  z-index: 1001;
+}
+.lightbox-content {
+  max-width: 90%;
+  max-height: 80%;
+  text-align: center;
+}
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 100vh;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  border: 4px solid var(--white);
+}
+.lightbox-caption {
+  color: var(--white);
+  margin-top: 15px;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: "Cormorant Garamond", serif;
+}
+.lightbox-nav button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 40px;
+  padding: 20px 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.lightbox-nav button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+#lbPrev {
+  left: 20px;
+}
+#lbNext {
+  right: 20px;
+}
+
+/* --- ESTIMATOR --- */
+.estimator {
+  background: var(--white);
+  padding: 100px 60px;
+}
+.estimator-header {
+  margin-bottom: 60px;
+  text-align: center;
+}
+.estimator-intro {
+  font-size: 16px;
+  color: var(--text-light);
+  max-width: 600px;
+  margin: 20px auto 0;
+  line-height: 1.8;
+}
+.estimator-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+  background: var(--cream);
+  padding: 50px;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+.est-group {
+  margin-bottom: 30px;
+}
+.est-group label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--sage-dark);
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+.est-group select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  background: white;
+}
+.est-range {
+  width: 100%;
+  accent-color: var(--gold);
+}
+.est-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.est-check-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+.est-result {
+  background: var(--sage-dark);
+  color: white;
+  padding: 40px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.estimator-result {
+  background: var(--sage-dark);
+  color: white;
+  padding: 40px;
+  border-radius: 6px;
+  text-align: center;
+}
+.total-label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+.total-price {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 54px;
+  color: var(--gold-light);
+  margin-bottom: 10px;
+}
+.total-sub {
+  font-size: 11px;
+  opacity: 0.6;
+}
+.total-breakdown {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+.total-breakdown h3 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.total-breakdown p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .estimator {
+    padding: 70px 24px;
+  }
+  .estimator-container {
+    grid-template-columns: 1fr;
+    padding: 30px 20px;
+  }
+  .est-grid {
+    grid-template-columns: 1fr;
+  }
+  .total-price {
+    font-size: 44px;
+  }
+  .lightbox-nav button {
+    padding: 10px 5px;
+    font-size: 30px;
+  }
+  .lightbox-close {
+    top: 20px;
+    right: 20px;
+    font-size: 40px;
+  }
+}
+
+/* --- AVAILABILITY --- */
+.availability {
+  background: var(--cream);
+  padding: 100px 60px;
+}
+.availability-header {
+  margin-bottom: 50px;
+  text-align: center;
+}
+.availability-intro {
+  font-size: 16px;
+  color: var(--text-light);
+  max-width: 600px;
+  margin: 20px auto 0;
+  line-height: 1.8;
+}
+.availability-grid {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 60px;
+  align-items: start;
+}
+.availability-info {
+  background: var(--white);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+.availability-info h3 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: var(--dark);
+}
+.legend-list {
+  list-style: none;
+  margin-bottom: 30px;
+}
+.legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.status-available { background: #7a8c6e; }
+.status-booked { background: #c0392b; }
+.status-pending { background: #c9a84c; }
+
+.availability-note {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+/* Flatpickr Availability Overrides */
+.availability-grid .flatpickr-calendar.inline {
+  width: 100% !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08) !important;
+  border: none !important;
+  background: white !important;
+  padding: 20px !important;
+}
+.flatpickr-day.booked {
+  background: rgba(192, 57, 43, 0.1) !important;
+  color: #c0392b !important;
+  border-color: #c0392b !important;
+  font-weight: 600 !important;
+}
+.flatpickr-day.pending {
+  background: rgba(201, 168, 76, 0.1) !important;
+  color: #c9a84c !important;
+  border-color: #c9a84c !important;
+}
+
+/* --- ADMIN ANALYTICS STYLES --- */
+.admin-charts-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+.admin-chart-card {
+  background: white;
+  padding: 24px;
+  border-radius: 6px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+}
+.admin-chart-title {
+  font-family: "Jost", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f5f0e8;
+}
+
+@media (max-width: 900px) {
+  .admin-charts-row {
+    grid-template-columns: 1fr;
+  }
+  .availability-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .availability {
+    padding: 70px 24px;
+  }
+}
+
+/* --- CONFIRM MODAL --- */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 30, 26, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.confirm-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+.confirm-modal {
+  background: var(--cream);
+  padding: 40px;
+  width: 100%;
+  max-width: 450px;
+  border-radius: 2px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  transform: translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.confirm-overlay.open .confirm-modal {
+  transform: translateY(0);
+}
+.confirm-brand {
+  font-family: "Jost", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+.confirm-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 28px;
+  color: var(--dark);
+  margin-bottom: 15px;
+  font-weight: 400;
+}
+.confirm-msg {
+  font-size: 15px;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-bottom: 35px;
+}
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.confirm-btn {
+  padding: 16px;
+  border: none;
+  font-family: "Jost", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.confirm-no {
+  background: white;
+  color: var(--dark);
+  border: 1px solid #e5dfd5;
+}
+.confirm-no:hover {
+  background: #fdfaf5;
+}
+.confirm-yes {
+  background: var(--sage-dark);
+  color: white;
+}
+.confirm-yes:hover {
+  background: #4e5e45;
+  transform: translateY(-2px);
+  box-shadow: 0 50px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 480px) {
+  .confirm-modal {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+}
