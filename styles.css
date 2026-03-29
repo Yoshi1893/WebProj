@@ -2244,6 +2244,441 @@ footer {
   }
 }
 
+/* --- BOOKING WIZARD --- */
+.wizard-container {
+  background: white;
+  padding: 40px;
+  border-radius: 2px;
+  box-shadow: 0 15px 45px rgba(0,0,0,0.05);
+  position: relative;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.wizard-progress {
+  position: relative;
+  height: 2px;
+  background: #eee;
+  margin-bottom: 50px;
+  margin-top: 20px;
+}
+.progress-bar-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--gold);
+  transition: width 0.5s ease;
+}
+.progress-steps {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.p-step {
+  width: 30px;
+  height: 30px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: "Jost", sans-serif;
+  color: var(--text-light);
+  transition: 0.3s;
+}
+.p-step.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+.p-step.completed {
+  background: var(--gold);
+  color: white;
+  border-color: var(--gold);
+}
+
+.wizard-step {
+  display: none;
+  animation: fadeInStep 0.5s ease forwards;
+}
+.wizard-step.active {
+  display: block;
+}
+@keyframes fadeInStep {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.wizard-subtitle {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  margin-bottom: 25px;
+  color: var(--dark);
+}
+
+/* Step 1: Venue Cards */
+.venue-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.venue-cards.triple-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.venue-card {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+.venue-card-img {
+  height: 120px;
+  filter: grayscale(100%);
+  transition: 0.5s;
+}
+.venue-card-info {
+  padding: 15px;
+  text-align: center;
+}
+.venue-card h4 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: var(--dark);
+}
+.venue-card p {
+  font-size: 11px;
+  color: var(--text-light);
+}
+.venue-card:hover {
+  border-color: var(--gold);
+}
+.venue-card.active {
+  border-color: var(--gold);
+  background: #fdfaf5;
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.1);
+}
+.venue-card.active .venue-card-img {
+  filter: grayscale(0%);
+}
+
+/* Step 3: Extras */
+.extras-grid {
+  display: grid;
+  gap: 15px;
+}
+.extra-item {
+  cursor: pointer;
+}
+.extra-item input {
+  display: none;
+}
+.extra-box {
+  border: 1px solid #eee;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: 0.3s;
+  background: white;
+}
+.extra-icon {
+  font-size: 24px;
+}
+.extra-text strong {
+  display: block;
+  font-size: 15px;
+  color: var(--dark);
+}
+.extra-text span {
+  font-size: 12px;
+  color: var(--text-light);
+}
+.extra-item input:checked + .extra-box {
+  border-color: var(--gold);
+  background: #fdfaf5;
+}
+
+/* Step 4: Summary & Form Fixes */
+.wizard-summary-box {
+  background: #fcfaf7;
+  border-left: 3px solid var(--gold);
+  padding: 25px;
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px 30px;
+}
+.summary-item label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+.summary-item span {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 18px;
+  color: var(--dark);
+}
+
+.wizard-form-fields .form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  text-align: left;
+}
+.wizard-form-fields .form-group input, 
+.wizard-select,
+.flatpickr-input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e5dfd5;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  background: #fff !important;
+  color: var(--dark) !important;
+  transition: 0.3s;
+}
+.wizard-form-fields .form-group input::placeholder {
+  color: #bbb;
+}
+.wizard-form-fields .form-group input:focus, .wizard-select:focus {
+  border-color: var(--gold);
+  outline: none;
+  background: #fdfaf5 !important;
+}
+
+.wizard-nav {
+  margin-top: auto;
+  padding-top: 30px;
+  display: flex;
+  gap: 15px;
+}
+
+#wizPrev {
+  background: white;
+  border: 1px solid #e5dfd5;
+  color: var(--dark);
+  transition: 0.3s;
+}
+#wizPrev:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Admin Extras Badge */
+.extra-badge {
+  display: inline-block;
+  font-size: 10px;
+  background: var(--cream);
+  color: var(--sage-dark);
+  padding: 2px 8px;
+  margin: 2px;
+  border: 1px solid #e5dfd5;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .venue-cards.triple-grid { grid-template-columns: 1fr; }
+  .wizard-container { padding: 25px 20px; min-height: 600px; }
+  .wizard-summary-box { grid-template-columns: 1fr; }
+}
+
+/* --- IMMERSIVE EXPLORER --- */
+.explorer-section {
+  height: 600px;
+  background: #1a1a15;
+  position: relative;
+  overflow: hidden;
+}
+.explorer-outer {
+  height: 100%;
+  position: relative;
+}
+.explorer-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.explorer-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  background-size: cover;
+  background-position: center;
+}
+.explorer-bg.active {
+  opacity: 1;
+  animation: ken-burns 20s infinite alternate ease-in-out;
+}
+.explorer-bg.ballroom {
+  background-image: url('pearl_ballroom_wide_1774800152405.png');
+}
+.explorer-bg.garden {
+  background-image: url('wavecrest_garden_wide_1774800176980.png');
+}
+@keyframes ken-burns {
+  0% { transform: scale(1.0); }
+  100% { transform: scale(1.15) translate(-2%, -1%); }
+}
+
+.explorer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(90deg, rgba(30,30,26,0.85) 0%, rgba(30,30,26,0.3) 50%, rgba(30,30,26,0) 100%);
+  padding: 80px 10%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.explorer-overlay .section-label { justify-content: flex-start; }
+.explorer-overlay .section-title { color: white; margin-bottom: 20px; text-align: left; }
+.explorer-intro {
+  color: rgba(255,255,255,0.7);
+  max-width: 450px;
+  margin-bottom: 40px;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.explorer-controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 50px;
+}
+.explorer-tab {
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 12px 0;
+  font-family: "Jost", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.explorer-tab.active, .explorer-tab:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.explorer-details {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+  max-width: 450px;
+  border-left: 2px solid var(--gold);
+}
+.explorer-details h3 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  color: white;
+  margin-bottom: 10px;
+}
+.explorer-details p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 20px;
+}
+.exp-stat-row {
+  display: flex;
+  gap: 30px;
+}
+.exp-stat span {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.exp-stat strong {
+  color: white;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 18px;
+}
+
+/* --- WEATHER WIDGET --- */
+.weather-widget {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(10px);
+  padding: 20px 25px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255,255,255,0.3);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.weather-icon { font-size: 32px; }
+.weather-temp {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 36px;
+  color: var(--sage-dark);
+}
+.weather-loc {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-light);
+}
+.weather-cond {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 14px;
+}
+.weather-badge {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: var(--gold);
+  color: white;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (max-width: 900px) {
+  .explorer-section { height: auto; }
+  .explorer-overlay {
+    position: relative;
+    padding: 60px 24px;
+    background: #1a1a15;
+    width: 100%;
+  }
+  .explorer-stage { position: relative; height: 300px; }
+  .explorer-controls { flex-wrap: wrap; }
+}
+
 /* --- CONFIRM MODAL --- */
 .confirm-overlay {
   position: fixed;

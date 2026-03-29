@@ -229,22 +229,26 @@ function refreshAdminBookings(){
     const statusClass = `status-${b.status}`;
     const statusLabel = b.status.charAt(0).toUpperCase() + b.status.slice(1);
     
-    let actionBtn = '';
-    if (b.status === 'pending') {
-      actionBtn = `<button class="tbl-btn tbl-confirm" onclick="changeBookingStatus(${b.id}, 'confirmed')">Confirm</button>`;
-    } else if (b.status === 'confirmed') {
-      actionBtn = `<button class="tbl-btn tbl-cancel" onclick="changeBookingStatus(${b.id}, 'cancelled')">Cancel</button>`;
-    } else {
-      actionBtn = `<span style="color:#ccc;font-size:13px;">—</span>`;
-    }
+    const actionBtn = b.status === 'pending' 
+      ? `<button class="tbl-btn tbl-confirm" onclick="changeBookingStatus(${b.id}, 'confirmed')">Confirm</button>`
+      : b.status === 'confirmed' 
+        ? `<button class="tbl-btn tbl-cancel" onclick="changeBookingStatus(${b.id}, 'cancelled')">Cancel</button>`
+        : `<span style="color:#ccc;font-size:13px;">—</span>`;
+
+    const extrasHtml = b.extras && b.extras.length 
+      ? b.extras.map(ex => `<span class="extra-badge">${ex}</span>`).join('') 
+      : '<span style="color:#ccc;font-size:11px;">No extras</span>';
 
     return `
       <tr>
         <td>${escapeHTML(b.client)}</td>
-        <td>${escapeHTML(b.event)}</td>
+        <td>
+          <div style="font-weight:600; font-size:14px; color:var(--dark);">${escapeHTML(b.event)}</div>
+          <div style="margin-top:5px;">${extrasHtml}</div>
+        </td>
         <td>${escapeHTML(b.venue)}</td>
         <td>${new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td><span class="status-badge status-${b.status}">${statusLabel}</span></td>
         <td>${actionBtn}</td>
       </tr>
     `;
@@ -299,6 +303,83 @@ function showConfirmModal(title, message) {
     noBtn.addEventListener('click', onNo);
   });
 }
+
+// ===== IMMERSIVE EXPLORER =====
+const EXPLORER_DATA = {
+  ballroom: {
+    title: 'The Pearl Ballroom',
+    desc: 'A masterpiece of gold and light, featuring crystal chandeliers and floor-to-ceiling views of the lagoon.',
+    cap: '500 Guests',
+    aes: 'Grand Luxury'
+  },
+  garden: {
+    title: 'Wavecrest Garden',
+    desc: 'Lush manicured greenery and stone pathways under a white wedding gazebo, perfect for golden hour celebrations.',
+    cap: '300 Guests',
+    aes: 'Natural Elegance'
+  }
+};
+
+function switchExplorerView(view) {
+  const data = EXPLORER_DATA[view];
+  if (!data) return;
+
+  // Update tabs
+  document.querySelectorAll('.explorer-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+
+  // Update backgrounds
+  document.querySelectorAll('.explorer-bg').forEach(bg => {
+    bg.classList.toggle('active', bg.id === `bg${view.charAt(0).toUpperCase() + view.slice(1)}`);
+  });
+
+  // Update text with fade
+  const detailBox = document.getElementById('explorerDetails');
+  detailBox.style.opacity = '0';
+  detailBox.style.transform = 'translateX(-20px)';
+  
+  setTimeout(() => {
+    document.getElementById('expTitle').textContent = data.title;
+    document.getElementById('expDesc').textContent = data.desc;
+    const stats = detailBox.querySelectorAll('strong');
+    stats[0].textContent = data.cap;
+    stats[1].textContent = data.aes;
+    
+    detailBox.style.opacity = '1';
+    detailBox.style.transform = 'translateX(0)';
+  }, 300);
+}
+
+document.querySelectorAll('.explorer-tab').forEach(tab => {
+  tab.onclick = () => switchExplorerView(tab.dataset.view);
+});
+
+// ===== WEATHER WIDGET MOCK =====
+function initWeatherWidget() {
+  const now = new Date();
+  const hour = now.getHours();
+  let temp, icon, cond;
+
+  if (hour >= 6 && hour < 18) {
+    temp = 30 + Math.floor(Math.random() * 3);
+    icon = '🌤️';
+    cond = 'Partly Cloudy';
+  } else {
+    temp = 25 + Math.floor(Math.random() * 3);
+    icon = '🌙';
+    cond = 'Clear Sky';
+  }
+
+  document.getElementById('weaTemp').textContent = `${temp}°C`;
+  document.getElementById('weaIcon').textContent = icon;
+  document.getElementById('weaCond').textContent = cond;
+}
+
+// Initialize new features
+initWeatherWidget();
+// Periodically update weather for realism
+setInterval(initWeatherWidget, 600000);
 
 // ===== CUSTOMER PANEL =====
 function openCustomerPanel(){
@@ -355,22 +436,87 @@ strip.addEventListener('mouseleave',()=>down=false);
 strip.addEventListener('mouseup',()=>down=false);
 strip.addEventListener('mousemove',e=>{ if(!down) return; e.preventDefault(); strip.scrollLeft=sl-(e.pageX-strip.offsetLeft-sx)*1.5; });
 
-// ===== INQUIRY FORM =====
-document.getElementById('inquiryForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  const firstName = document.getElementById('inqFirst').value;
-  const lastName = document.getElementById('inqLast').value;
-  const email = document.getElementById('inqEmail').value;
-  const phone = document.getElementById('inqPhone').value;
-  const event = document.getElementById('inqEvent').value;
-  const venue = 'To be discussed'; // Optional: add a venue selector to form
-  const date = document.getElementById('inqDate').value;
+// ===== BOOKING WIZARD =====
+let currentStep = 1;
+const wizardState = {
+  venue: 'Pearl Ballroom',
+  date: '',
+  extras: [],
+  contact: {}
+};
 
-  if (!date) {
-    showToast('Please select a date for your event.', '#c0392b');
+function goToStep(step) {
+  if (step < 1 || step > 4) return;
+  
+  // Validation
+  if (step > currentStep) {
+    if (currentStep === 2 && !document.getElementById('wizDate').value) {
+      showToast('Please select a date first.', '#c0392b'); return;
+    }
+  }
+
+  // Populate Summary in Step 4
+  if (step === 4) {
+    const venue = wizardState.venue;
+    const date = document.getElementById('wizDate').value;
+    const event = document.getElementById('wizEvent').value;
+    const extras = Array.from(document.querySelectorAll('input[name="extra"]:checked')).map(el => el.value);
+    
+    document.getElementById('wizardSummary').innerHTML = `
+      <div class="summary-item"><label>Venue</label><span>${venue}</span></div>
+      <div class="summary-item"><label>Date</label><span>${date || 'Not Selected'}</span></div>
+      <div class="summary-item"><label>Event</label><span>${event}</span></div>
+      <div class="summary-item"><label>Extras</label><span>${extras.length ? extras.join(', ') : 'None'}</span></div>
+    `;
+  }
+
+  // Update UI
+  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(`wizardStep${step}`).classList.add('active');
+  
+  document.querySelectorAll('.p-step').forEach((s, idx) => {
+    s.classList.toggle('active', idx + 1 === step);
+    s.classList.toggle('completed', idx + 1 < step);
+  });
+
+  document.getElementById('wizardBar').style.width = `${(step / 4) * 100}%`;
+  
+  // Nav buttons
+  document.getElementById('wizPrev').style.display = step === 1 ? 'none' : 'block';
+  document.getElementById('wizNext').style.display = step === 4 ? 'none' : 'block';
+  document.getElementById('wizSubmit').style.display = step === 4 ? 'block' : 'none';
+
+  currentStep = step;
+}
+
+// Venue Selection
+document.querySelectorAll('.venue-card').forEach(card => {
+  card.onclick = function() {
+    document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    wizardState.venue = this.dataset.venue;
+  };
+});
+
+// Nav Clicks
+document.getElementById('wizNext').onclick = () => goToStep(currentStep + 1);
+document.getElementById('wizPrev').onclick = () => goToStep(currentStep - 1);
+
+// Final Submit
+document.getElementById('wizSubmit').onclick = function() {
+  const firstName = document.getElementById('wizFirst').value.trim();
+  const lastName = document.getElementById('wizLast').value.trim();
+  const email = document.getElementById('wizEmail').value.trim();
+  const phone = document.getElementById('wizPhone').value.trim();
+  const date = document.getElementById('wizDate').value;
+  const event = document.getElementById('wizEvent').value;
+
+  if (!firstName || !lastName || !email) {
+    showToast('Please complete your contact details.', '#c0392b');
     return;
   }
+
+  const extras = Array.from(document.querySelectorAll('input[name="extra"]:checked')).map(el => el.value);
 
   const newBooking = {
     id: Date.now(),
@@ -378,27 +524,34 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     email: email,
     phone: phone,
     event: event,
-    venue: venue,
+    venue: wizardState.venue,
     date: date,
+    extras: extras,
     status: 'pending'
   };
 
   bookings.push(newBooking);
   saveBookings();
-  
-  // Refresh admin views if open
+
+  // Refresh views
   if (document.getElementById('adminPanel').classList.contains('open')) {
     refreshAdminBookings();
     initAdminCharts();
   }
 
-  showToast('✦ Inquiry sent! We\'ll be in touch within 24 hours.');
-  this.reset();
+  showToast('✦ Reservation Secured! Our team will contact you shortly.');
   
-  // Reset flatpickr
-  const fp = document.getElementById('inqDate')._flatpickr;
-  if (fp) fp.clear();
-});
+  // Reset Wizard
+  setTimeout(() => {
+    goToStep(1);
+    document.querySelectorAll('input[name="extra"]').forEach(el => el.checked = false);
+    document.getElementById('wizFirst').value = '';
+    document.getElementById('wizLast').value = '';
+    document.getElementById('wizEmail').value = '';
+    document.getElementById('wizPhone').value = '';
+    if (document.getElementById('wizDate')._flatpickr) document.getElementById('wizDate')._flatpickr.clear();
+  }, 1000);
+};
 
 // ===== SMOOTH SCROLL =====
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
@@ -439,12 +592,13 @@ document.querySelectorAll('input, select, textarea').forEach(input => {
 // ===== INIT =====
 updateNav();
 if (window.flatpickr) {
-  flatpickr("#inqDate", {
+  flatpickr("#wizDate", {
     minDate: "today",
     altInput: true,
     altFormat: "F j, Y",
     dateFormat: "Y-m-d",
-    disableMobile: "true"
+    disableMobile: "true",
+    inline: false
   });
 }
 
@@ -594,7 +748,20 @@ function updateAvailabilityCalendar() {
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
   updateAvailabilityCalendar();
+  goToStep(1); // Start Wizard at Step 1
 });
+
+// Update Flatpickr initialization
+if (window.flatpickr) {
+  flatpickr("#wizDate", {
+    minDate: "today",
+    altInput: true,
+    altFormat: "F j, Y",
+    dateFormat: "Y-m-d",
+    disableMobile: "true",
+    inline: false
+  });
+} 
 
 // ===== ADMIN ANALYTICS (CHART.JS) =====
 let trendChart, statusChart;
