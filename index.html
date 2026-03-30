@@ -575,6 +575,36 @@
     </div>
   </section>
 
+  <!-- IMMERSIVE EXPLORER -->
+  <section class="explorer-section" id="explorer">
+    <div class="explorer-outer">
+      <div class="explorer-overlay">
+        <div class="section-label">Immersive Spaces</div>
+        <h2 class="section-title">Step Into the <em>Extraordinary</em></h2>
+        <p class="explorer-intro">Experience the cinematic grandeur of our signature venues before you even arrive.</p>
+        
+        <div class="explorer-controls">
+          <button class="explorer-tab active" data-view="ballroom">The Pearl Ballroom</button>
+          <button class="explorer-tab" data-view="garden">Wavecrest Garden</button>
+        </div>
+        
+        <div class="explorer-details" id="explorerDetails">
+          <h3 id="expTitle">The Pearl Ballroom</h3>
+          <p id="expDesc">A masterpiece of gold and light, featuring crystal chandeliers and floor-to-ceiling views of the lagoon.</p>
+          <div class="exp-stat-row">
+            <div class="exp-stat"><span>Capacity</span><strong>500 Guests</strong></div>
+            <div class="exp-stat"><span>Aesthetic</span><strong>Grand Luxury</strong></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="explorer-stage" id="explorerStage">
+        <div class="explorer-bg ballroom active" id="bgBallroom"></div>
+        <div class="explorer-bg garden" id="bgGarden"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- AVAILABILITY CALENDAR -->
   <section class="availability" id="availability">
     <div class="availability-header">
@@ -585,6 +615,18 @@
     <div class="availability-grid reveal">
       <div id="availabilityCal"></div>
       <div class="availability-info">
+        <div id="weatherWidget" class="weather-widget">
+          <!-- Live Weather Mockup -->
+          <div class="weather-main">
+            <span class="weather-icon" id="weaIcon">🌤️</span>
+            <span class="weather-temp" id="weaTemp">28°C</span>
+          </div>
+          <div class="weather-details">
+            <div class="weather-loc">Taguig City, PH</div>
+            <div class="weather-cond" id="weaCond">Partly Cloudy</div>
+          </div>
+          <div class="weather-badge">LIVE</div>
+        </div>
         <h3>Calendar Legend</h3>
         <ul class="legend-list">
           <li><span class="legend-dot status-available"></span> Available Date</li>
@@ -637,41 +679,129 @@
         </div>
       </div>
       <div class="contact-form">
-        <form id="inquiryForm">
-          <div class="form-row">
-            <div class="form-group"><label for="inqFirst">First Name</label><input type="text" id="inqFirst"
-                placeholder="Maria" required></div>
-            <div class="form-group"><label for="inqLast">Last Name</label><input type="text" id="inqLast"
-                placeholder="Santos" required></div>
+        <div class="wizard-container" id="bookingWizard">
+          <!-- Wizard Progress -->
+          <div class="wizard-progress">
+            <div class="progress-bar-inner" id="wizardBar" style="width: 25%"></div>
+            <div class="progress-steps">
+              <div class="p-step active" data-step="1">1</div>
+              <div class="p-step" data-step="2">2</div>
+              <div class="p-step" data-step="3">3</div>
+              <div class="p-step" data-step="4">4</div>
+            </div>
           </div>
-          <div class="form-group"><label for="inqEmail">Email Address</label><input type="email" id="inqEmail"
-              placeholder="maria@email.com" required></div>
-          <div class="form-group"><label for="inqPhone">Contact Number</label><input type="tel" id="inqPhone"
-              placeholder="+63 917 000 0000"></div>
-          <div class="form-row">
-            <div class="form-group"><label for="inqEvent">Event Type</label><select id="inqEvent" required>
-                <option value="" disabled selected>Select event</option>
-                <option>Wedding</option>
-                <option>Debut / 18th Birthday</option>
-                <option>Birthday Celebration</option>
-                <option>Corporate Event</option>
-                <option>Baptism / Christening</option>
-                <option>Anniversary</option>
-                <option>Other</option>
-              </select></div>
-            <div class="form-group"><label for="inqVenue">Preferred Venue</label><select id="inqVenue">
-                <option value="" disabled selected>Select venue</option>
-                <option>Wavecrest Garden</option>
-                <option>Pearl Ballroom</option>
-                <option>Tidal Pool Terrace</option>
-                <option>Not Sure Yet</option>
-              </select></div>
+
+          <!-- STEP 1: THE SPACE -->
+          <div class="wizard-step active" id="wizardStep1">
+            <h3 class="wizard-subtitle">Step 1: Choose Your <em>Space</em></h3>
+            <div class="venue-cards triple-grid" style="margin-bottom: 30px;">
+              <div class="venue-card active" data-venue="Pearl Ballroom">
+                <div class="venue-card-img" style="background:url('pearl_ballroom_wide_1774800152405.png') center/cover"></div>
+                <div class="venue-card-info">
+                  <h4>Pearl Ballroom</h4>
+                  <p>Grand Luxury • 500 Guests</p>
+                </div>
+              </div>
+              <div class="venue-card" data-venue="Wavecrest Garden">
+                <div class="venue-card-img" style="background:url('wavecrest_garden_wide_1774800176980.png') center/cover"></div>
+                <div class="venue-card-info">
+                  <h4>Wavecrest Garden</h4>
+                  <p>Natural Elegance • 300 Guests</p>
+                </div>
+              </div>
+              <div class="venue-card" data-venue="Tidal Pool Terrace">
+                <div class="venue-card-img" style="background:url('tidal_pool_terrace_wide_1774801351451.png') center/cover"></div>
+                <div class="venue-card-info">
+                  <h4>Tidal Pool Terrace</h4>
+                  <p>Poolside Bliss • 150 Guests</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="wizEvent">What are we celebrating?</label>
+              <select id="wizEvent" class="wizard-select">
+                <option value="Wedding" selected>Wedding</option>
+                <option value="Debut">Debut / 18th Birthday</option>
+                <option value="Corporate">Corporate Gala</option>
+                <option value="Social">Social Event</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group"><label for="inqDate">Event Date</label><input type="date" id="inqDate"></div>
-          <div class="form-group"><label for="inqMessage">Message</label><textarea id="inqMessage"
-              placeholder="Tell us about your dream event..."></textarea></div>
-          <button type="submit" class="form-submit">Send Inquiry ✦</button>
-        </form>
+
+          <!-- STEP 2: THE DATE -->
+          <div class="wizard-step" id="wizardStep2">
+            <h3 class="wizard-subtitle">Step 2: Reserve Your <em>Date</em></h3>
+            <p style="margin-bottom:20px; font-size:14px; color:var(--text-light)">Select your preferred date from our live calendar.</p>
+            <div class="form-group">
+              <label for="wizDate">Event Date</label>
+              <input type="text" id="wizDate" placeholder="Select your date" readonly>
+            </div>
+          </div>
+
+          <!-- STEP 3: THE EXTRAS -->
+          <div class="wizard-step" id="wizardStep3">
+            <h3 class="wizard-subtitle">Step 3: Enhance Your <em>Experience</em></h3>
+            <div class="extras-grid">
+              <label class="extra-item">
+                <input type="checkbox" name="extra" value="Gourmet Catering">
+                <div class="extra-box">
+                  <span class="extra-icon">🍽️</span>
+                  <div class="extra-text">
+                    <strong>Gourmet Catering</strong>
+                    <span>Full course curated menu</span>
+                  </div>
+                </div>
+              </label>
+              <label class="extra-item">
+                <input type="checkbox" name="extra" value="Overnight Stay">
+                <div class="extra-box">
+                  <span class="extra-icon">🛌</span>
+                  <div class="extra-text">
+                    <strong>Overnight Stay</strong>
+                    <span>Main villa accommodation</span>
+                  </div>
+                </div>
+              </label>
+              <label class="extra-item">
+                <input type="checkbox" name="extra" value="Professional Decor">
+                <div class="extra-box">
+                  <span class="extra-icon">✨</span>
+                  <div class="extra-text">
+                    <strong>Thematic Decor</strong>
+                    <span>Bespoke styling & floral</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- STEP 4: THE DETAILS -->
+          <div class="wizard-step" id="wizardStep4">
+            <h3 class="wizard-subtitle">Step 4: Final <em>Details</em></h3>
+            
+            <div id="wizardSummary" class="wizard-summary-box">
+              <!-- Dynamically Populated -->
+            </div>
+
+            <div class="wizard-form-fields">
+              <div class="form-row">
+                <div class="form-group"><label for="wizFirst">First Name</label><input type="text" id="wizFirst" placeholder="Maria" required></div>
+                <div class="form-group"><label for="wizLast">Last Name</label><input type="text" id="wizLast" placeholder="Santos" required></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label for="wizEmail">Email Address</label><input type="email" id="wizEmail" placeholder="maria@email.com" required></div>
+                <div class="form-group"><label for="wizPhone">Phone Number</label><input type="tel" id="wizPhone" placeholder="+63 917 000 0000"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="wizard-nav">
+            <button class="btn-outline" id="wizPrev" style="display:none; padding: 12px 25px;">← Back</button>
+            <button class="auth-btn" id="wizNext" style="margin-left:auto; padding: 12px 25px;">Next Step →</button>
+            <button class="auth-btn" id="wizSubmit" style="display:none; margin-left:auto; padding: 12px 25px;">Secure Reservation ✦</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -707,6 +837,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 
