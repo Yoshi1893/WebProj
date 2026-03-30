@@ -1,927 +1,777 @@
-// ===== PROTOTYPE DATA (OBFUSCATED) =====
-// Note: In a production environment, authentication must be handled server-side.
-const ADMIN_EMAIL_B64 = 'YWRtaW5AOXdhdmVzLmNvbQ=='; // admin@9waves.com
-const ADMIN_PASS_B64  = 'YWRtaW4xMjM=';            // admin123
+const ADMIN_EMAIL_B64 = 'YWRtaW5AOXdhdmVzLmNvbQ==';
+const ADMIN_PASS_B64 = 'YWRtaW4xMjM=';
+const STORAGE_KEYS = { users: '9waves_users', current: '9waves_current', inquiries: '9waves_inquiries' };
+const PACKAGE_DATA = {
+  ripple: { name: 'Ripple Pack', base: 45000, pax: 100, extra: 350 },
+  crest: { name: 'Crest Pack', base: 85000, pax: 200, extra: 450 },
+  sovereign: { name: 'Sovereign Wave', base: 150000, pax: 500, extra: 600 }
+};
+const STATUS_META = {
+  submitted: { label: 'Submitted', className: 'status-submitted' },
+  review: { label: 'Under Review', className: 'status-review' },
+  proposal: { label: 'Proposal Sent', className: 'status-proposal' },
+  closed: { label: 'Closed', className: 'status-closed' }
+};
+const $ = (id) => document.getElementById(id);
+let users = loadJSON(STORAGE_KEYS.users, []);
+let currentUser = loadJSON(STORAGE_KEYS.current, null);
+let inquiries = loadInquiries();
+let currentStep = 1;
+let trendChart;
+let statusChart;
+let isSyncingEstimate = false;
+const wizardState = { venue: 'Pearl Ballroom' };
 
-let users = JSON.parse(localStorage.getItem('9waves_users') || '[]');
-let currentUser = JSON.parse(localStorage.getItem('9waves_current') || 'null');
-let bookings  = JSON.parse(localStorage.getItem('9waves_bookings') || '[]');
-
-// Seed initial bookings if empty
-if (bookings.length === 0) {
-  bookings = [
-    { id: 1, client: 'Andrea Santos', event: 'Wedding', venue: 'Pearl Ballroom', date: '2025-04-12', status: 'pending' },
-    { id: 2, client: 'Lorraine Dela Cruz', event: 'Debut', venue: 'Wavecrest Garden', date: '2025-05-03', status: 'confirmed' },
-    { id: 3, client: 'Raphael Tan', event: 'Corporate Gala', venue: 'Pearl Ballroom', date: '2025-06-20', status: 'pending' },
-    { id: 4, client: 'Elena Rodriguez', event: 'Wedding', venue: 'Wavecrest Garden', date: '2025-05-15', status: 'confirmed' },
-    { id: 5, client: 'Marcus Wong', event: 'Corporate Event', venue: 'Tidal Pool Terrace', date: '2025-07-10', status: 'pending' }
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+  catch { return fallback; }
+}
+function saveUsers() { localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users)); }
+function saveSession(user) { currentUser = user; localStorage.setItem(STORAGE_KEYS.current, JSON.stringify(user)); }
+function clearSession() { currentUser = null; localStorage.removeItem(STORAGE_KEYS.current); }
+function saveInquiries() { localStorage.setItem(STORAGE_KEYS.inquiries, JSON.stringify(inquiries)); }
+function escapeHTML(value) { const div = document.createElement('div'); div.textContent = value == null ? '' : String(value); return div.innerHTML; }
+function formatCurrency(amount) { return `PHP ${Number(amount || 0).toLocaleString('en-PH')}`; }
+function getAddOnPrice(name) {
+  const input = Array.from(document.querySelectorAll('.wiz-addon, .est-addon')).find((item) => item.value === name);
+  return input ? parseInt(input.dataset.price || '0', 10) : 0;
+}
+function calculateEstimate(packageKey, guestCount, addOns) {
+  const pkg = PACKAGE_DATA[packageKey] || PACKAGE_DATA.crest;
+  const guests = Number(guestCount || 0);
+  const extraGuests = Math.max(0, guests - pkg.pax);
+  const baseTotal = pkg.base + (extraGuests * pkg.extra);
+  const addOnTotal = (addOns || []).reduce((sum, addOn) => sum + getAddOnPrice(addOn), 0);
+  return {
+    packageName: pkg.name,
+    baseTotal,
+    addOnTotal,
+    total: baseTotal + addOnTotal
+  };
+}
+function isoDateFromToday(daysAhead) { const date = new Date(); date.setDate(date.getDate() + daysAhead); return date.toISOString().split('T')[0]; }
+function mapLegacyStatus(status) { return status === 'pending' ? 'submitted' : status === 'confirmed' ? 'proposal' : 'closed'; }
+function loadInquiries() {
+  const saved = loadJSON(STORAGE_KEYS.inquiries, []);
+  if (saved.length) return saved;
+  const legacy = loadJSON('9waves_bookings', []);
+  if (legacy.length) {
+    return legacy.map((item) => ({
+      id: item.id || Date.now(),
+      client: item.client || 'Guest',
+      customerEmail: item.email || '',
+      event: item.event || 'Wedding',
+      venue: item.venue || 'Pearl Ballroom',
+      preferredDate: item.date || isoDateFromToday(30),
+      backupDate: item.date || isoDateFromToday(37),
+      packageKey: 'crest',
+      guestCount: 200,
+      budgetRange: 'PHP 75,000 - PHP 150,000',
+      addOns: item.extras || [],
+      notes: '',
+      phone: item.phone || '',
+      status: mapLegacyStatus(item.status),
+      createdAt: new Date().toISOString()
+    }));
+  }
+  return [
+    { id: 1, client: 'Andrea Santos', customerEmail: 'andrea@example.com', event: 'Wedding', venue: 'Pearl Ballroom', preferredDate: isoDateFromToday(28), backupDate: isoDateFromToday(35), packageKey: 'crest', guestCount: 180, budgetRange: 'PHP 75,000 - PHP 150,000', addOns: ['Full Event Coordination'], notes: 'Prefers a classic ballroom setup.', phone: '+63 917 111 2222', status: 'review', createdAt: new Date().toISOString() },
+    { id: 2, client: 'Lorraine Dela Cruz', customerEmail: 'lorraine@example.com', event: 'Debut', venue: 'Wavecrest Garden', preferredDate: isoDateFromToday(45), backupDate: isoDateFromToday(52), packageKey: 'ripple', guestCount: 120, budgetRange: 'Under PHP 75,000', addOns: ['Flower Wall Backdrop'], notes: 'Wants a sunset ceremony flow.', phone: '+63 917 333 4444', status: 'proposal', createdAt: new Date().toISOString() },
+    { id: 3, client: 'Raphael Tan', customerEmail: 'raphael@example.com', event: 'Corporate Gala', venue: 'Pearl Ballroom', preferredDate: isoDateFromToday(60), backupDate: isoDateFromToday(67), packageKey: 'sovereign', guestCount: 320, budgetRange: 'Above PHP 250,000', addOns: ['Pro A/V Upgrade'], notes: 'Needs stage, projection, and dinner flow.', phone: '+63 917 555 6666', status: 'submitted', createdAt: new Date().toISOString() }
   ];
-  localStorage.setItem('9waves_bookings', JSON.stringify(bookings));
 }
-
-function escapeHTML(str) {
-  if (!str) return '';
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+function showToast(message, background) {
+  const toast = $('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.style.background = background || 'var(--sage-dark)';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
 }
-
-function saveUsers(){ localStorage.setItem('9waves_users', JSON.stringify(users)); }
-function saveSession(u){ currentUser=u; localStorage.setItem('9waves_current', JSON.stringify(u)); }
-function clearSession(){ currentUser=null; localStorage.removeItem('9waves_current'); }
-function saveBookings(){ 
-  localStorage.setItem('9waves_bookings', JSON.stringify(bookings)); 
-  updateAvailabilityCalendar();
+function openAuth() { $('authOverlay').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeAuth() { $('authOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+function closeMobile() { $('mobileMenu').classList.remove('open'); }
+function clearFormErrors() { ['loginError', 'regError'].forEach((id) => { const el = $(id); if (el) { el.textContent = ''; el.style.display = 'none'; } }); }
+function showError(id, message) { const el = $(id); if (el) { el.textContent = message; el.style.display = 'block'; } }
+function updateAuthNote() {
+  const note = $('wizardAuthNote');
+  if (!note) return;
+  note.textContent = currentUser && currentUser.role === 'customer'
+    ? 'Signed in. Your account details will be used to save this inquiry on this device.'
+    : 'Sign in with your 9 Waves account before sending this inquiry.';
 }
-
-// ===== TOAST =====
-function showToast(msg, bg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = bg || 'var(--sage-dark)';
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 4500);
-}
-
-// ===== AUTH MODAL =====
-function openAuth(){ document.getElementById('authOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeAuth(){ document.getElementById('authOverlay').classList.remove('open'); document.body.style.overflow=''; }
-document.getElementById('authClose').onclick = closeAuth;
-document.getElementById('authOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('authOverlay')) closeAuth(); });
-
-// TABS
-document.querySelectorAll('.auth-tab').forEach(tab=>{
-  tab.onclick = function(){
-    document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('active'));
-    this.classList.add('active');
-    document.getElementById('panel-'+this.dataset.tab).classList.add('active');
-    clearFormErrors();
-  };
-});
-document.getElementById('goRegister').onclick = e=>{ e.preventDefault(); document.querySelectorAll('.auth-tab')[1].click(); };
-document.getElementById('goLogin').onclick    = e=>{ e.preventDefault(); document.querySelectorAll('.auth-tab')[0].click(); };
-
-function clearFormErrors(){
-  ['loginError','regError'].forEach(id=>{ const el=document.getElementById(id); el.style.display='none'; el.textContent=''; });
-}
-function showError(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
-
-// ===== LOGIN =====
-document.getElementById('loginBtn').onclick = function(){
-  clearFormErrors();
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPassword').value;
-
-  if(!email||!pass){ showError('loginError','Please fill in all fields.'); return; }
-
-  // Check Admin First
-  if(btoa(email)===ADMIN_EMAIL_B64 && btoa(pass)===ADMIN_PASS_B64){
-    saveSession({ name:'Administrator', email, role:'admin' });
-    closeAuth();
-    openAdminPanel();
-    showToast('✦ Welcome back, Admin!');
+function updateNav() {
+  const area = $('navAuthArea');
+  const mobileLink = $('mobileAuthLink');
+  if (!currentUser) {
+    area.innerHTML = '<button class="nav-cta" onclick="openAuth()">Sign In</button>';
+    mobileLink.textContent = 'Sign In';
+    mobileLink.onclick = () => { openAuth(); closeMobile(); };
     return;
   }
-
-  // Check Customers
-  const user = users.find(u=>u.email===email && u.password===pass);
-  if(user){
-    saveSession({ name:user.firstName+' '+user.lastName, email:user.email, role:'customer', phone:user.phone });
-    closeAuth();
-    openCustomerPanel();
-    showToast('✦ Welcome back, '+user.firstName+'!');
-  } else {
-    showError('loginError','Invalid credentials. Please try again.');
-  }
-};
-
-// ===== REGISTER =====
-document.getElementById('registerBtn').onclick = function(){
-  clearFormErrors();
-  const first   = document.getElementById('regFirst').value.trim();
-  const last    = document.getElementById('regLast').value.trim();
-  const email   = document.getElementById('regEmail').value.trim();
-  const phone   = document.getElementById('regPhone').value.trim();
-  const pass    = document.getElementById('regPassword').value;
-  const confirm = document.getElementById('regConfirm').value;
-
-  if(!first||!last||!email||!pass){ showError('regError','Please fill in all required fields.'); return; }
-  if(pass.length<6){ showError('regError','Password must be at least 6 characters.'); return; }
-  if(pass!==confirm){ showError('regError','Passwords do not match.'); return; }
-  if(users.find(u=>u.email===email)){ showError('regError','An account with this email already exists.'); return; }
-
-  const newUser = {
-    firstName:first, lastName:last, email, phone, password:pass,
-    registered: new Date().toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})
-  };
-  users.push(newUser);
-  saveUsers();
-  saveSession({ name:first+' '+last, email, role:'customer', phone });
-  closeAuth();
-  openCustomerPanel();
-  showToast('✦ Account created! Welcome to 9 Waves, '+first+'!');
-};
-
-// ===== NAV =====
-function updateNav(){
-  const area = document.getElementById('navAuthArea');
-  const mobileLink = document.getElementById('mobileAuthLink');
-  if(!currentUser){
-    area.innerHTML = `<button class="nav-cta" onclick="openAuth()">Sign In</button>`;
-    mobileLink.textContent='Sign In';
-    mobileLink.onclick=()=>{ openAuth(); closeMobile(); };
-    return;
-  }
-  const initial = currentUser.name.charAt(0).toUpperCase();
-  const panelFn = currentUser.role==='admin' ? 'openAdminPanel()' : 'openCustomerPanel()';
-  const roleLabel = currentUser.role==='admin' ? '🔐 Administrator' : '👤 Customer';
-  const dashLabel = currentUser.role==='admin' ? 'Admin Dashboard' : 'My Account';
-  const safeName = escapeHTML(currentUser.name);
-  const safeFirstName = escapeHTML(currentUser.name.split(' ')[0]);
-  const safeInitial = escapeHTML(initial);
-
+  const dashLabel = currentUser.role === 'admin' ? 'Admin Dashboard' : 'My Account';
   area.innerHTML = `
     <div class="nav-user">
       <div class="nav-user-btn" id="dropBtn">
-        <div class="nav-avatar">${safeInitial}</div>
-        <span class="nav-user-name">${safeFirstName}</span>
-        <span class="nav-chevron">▼</span>
+        <div class="nav-avatar">${escapeHTML(currentUser.name.charAt(0).toUpperCase())}</div>
+        <span class="nav-user-name">${escapeHTML(currentUser.name.split(' ')[0])}</span>
+        <span class="nav-chevron">v</span>
       </div>
       <div class="user-dropdown" id="dropMenu">
         <div class="dropdown-header">
-          <div class="dropdown-name">${safeName}</div>
-          <div class="dropdown-role">${roleLabel}</div>
+          <div class="dropdown-name">${escapeHTML(currentUser.name)}</div>
+          <div class="dropdown-role">${currentUser.role === 'admin' ? 'Admin' : 'Customer'}</div>
         </div>
-        <button class="dropdown-item" onclick="${panelFn}"><span>🏠</span>${dashLabel}</button>
+        <button class="dropdown-item" id="openDashBtn">${dashLabel}</button>
         <hr class="dropdown-divider">
-        <button class="dropdown-item danger" onclick="signOut()"><span>🚪</span>Sign Out</button>
+        <button class="dropdown-item danger" onclick="signOut()">Sign Out</button>
       </div>
     </div>`;
-
   mobileLink.textContent = dashLabel;
-  mobileLink.onclick = ()=>{ currentUser.role==='admin'?openAdminPanel():openCustomerPanel(); closeMobile(); };
-
-  setTimeout(()=>{
-    const btn=document.getElementById('dropBtn');
-    const menu=document.getElementById('dropMenu');
-    if(!btn) return;
-    btn.onclick=()=>{ btn.classList.toggle('open'); menu.classList.toggle('open'); };
-    document.addEventListener('click', e=>{ if(!btn.contains(e.target)){ btn.classList.remove('open'); menu.classList.remove('open'); } }, {once:false});
-  },60);
+  mobileLink.onclick = () => { currentUser.role === 'admin' ? openAdminPanel() : openCustomerPanel(); closeMobile(); };
+  const dashBtn = $('openDashBtn');
+  if (dashBtn) dashBtn.onclick = () => currentUser.role === 'admin' ? openAdminPanel() : openCustomerPanel();
+  const dropBtn = $('dropBtn');
+  const dropMenu = $('dropMenu');
+  if (dropBtn && dropMenu) {
+    dropBtn.onclick = (event) => { event.stopPropagation(); dropBtn.classList.toggle('open'); dropMenu.classList.toggle('open'); };
+  }
 }
-
-// ===== SIGN OUT =====
-function signOut(){
-  const name = currentUser ? currentUser.name.split(' ')[0] : '';
-  clearSession();
-  updateNav();
-  document.getElementById('adminPanel').classList.remove('open');
-  document.getElementById('customerPanel').classList.remove('open');
-  document.body.style.overflow='';
-  showToast('✦ Goodbye, '+name+'! See you soon.', '#6b4f3a');
-}
-
-// ===== ADMIN PANEL =====
-function openAdminPanel(){
-  if(!currentUser||currentUser.role!=='admin') return;
-  document.getElementById('adminGreet').textContent = currentUser.name.split(' ')[0];
-  document.getElementById('adminDisplayName').textContent = currentUser.name;
+document.addEventListener('click', (event) => {
+  const dropBtn = $('dropBtn');
+  const dropMenu = $('dropMenu');
+  if (dropBtn && dropMenu && !dropBtn.contains(event.target)) {
+    dropBtn.classList.remove('open');
+    dropMenu.classList.remove('open');
+  }
+});
+function openAdminPanel() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  $('adminGreet').textContent = currentUser.name.split(' ')[0];
+  $('adminDisplayName').textContent = currentUser.name;
   refreshAdminUsers();
   refreshAdminBookings();
   initAdminCharts();
-  document.getElementById('adminPanel').classList.add('open');
-  document.body.style.overflow='hidden';
-  updateNav();
-}
-
-function refreshAdminUsers(){
-  const tbody = document.getElementById('adminUsersBody');
-  document.getElementById('statUsers').textContent = users.length;
-  if(!users.length){
-    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:28px 18px;">No registered customers yet.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = users.map(u=>`
-    <tr>
-      <td>${escapeHTML(u.firstName)} ${escapeHTML(u.lastName)}</td>
-      <td>${escapeHTML(u.email)}</td>
-      <td>${escapeHTML(u.phone||'—')}</td>
-      <td>${escapeHTML(u.registered||'—')}</td>
-    </tr>`).join('');
-}
-
-function refreshAdminBookings(){
-  const tbody = document.getElementById('adminBookingsBody');
-  const statBookings = document.getElementById('statBookings');
-  const statPending = document.getElementById('statPending');
-  
-  statBookings.textContent = bookings.length;
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
-  statPending.textContent = pendingCount;
-
-  if(!bookings.length){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px 18px;">No bookings found.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = bookings.map(b => {
-    const statusClass = `status-${b.status}`;
-    const statusLabel = b.status.charAt(0).toUpperCase() + b.status.slice(1);
-    
-    const actionBtn = b.status === 'pending' 
-      ? `<button class="tbl-btn tbl-confirm" onclick="changeBookingStatus(${b.id}, 'confirmed')">Confirm</button>`
-      : b.status === 'confirmed' 
-        ? `<button class="tbl-btn tbl-cancel" onclick="changeBookingStatus(${b.id}, 'cancelled')">Cancel</button>`
-        : `<span style="color:#ccc;font-size:13px;">—</span>`;
-
-    const extrasHtml = b.extras && b.extras.length 
-      ? b.extras.map(ex => `<span class="extra-badge">${ex}</span>`).join('') 
-      : '<span style="color:#ccc;font-size:11px;">No extras</span>';
-
-    return `
-      <tr>
-        <td>${escapeHTML(b.client)}</td>
-        <td>
-          <div style="font-weight:600; font-size:14px; color:var(--dark);">${escapeHTML(b.event)}</div>
-          <div style="margin-top:5px;">${extrasHtml}</div>
-        </td>
-        <td>${escapeHTML(b.venue)}</td>
-        <td>${new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-        <td><span class="status-badge status-${b.status}">${statusLabel}</span></td>
-        <td>${actionBtn}</td>
-      </tr>
-    `;
-  }).join('');
-}
-
-async function changeBookingStatus(id, status){
-  const booking = bookings.find(b => b.id === id);
-  if (booking) {
-    if (status === 'cancelled') {
-      const confirmed = await showConfirmModal(
-        'Confirm Cancellation', 
-        `Are you sure you want to cancel the booking for ${booking.client}? This action cannot be undone.`
-      );
-      if (!confirmed) return;
-    }
-
-    booking.status = status;
-    saveBookings();
-    refreshAdminBookings();
-    initAdminCharts(); // Refresh charts
-    showToast(`✦ Booking for ${booking.client} ${status}!`);
-  }
-}
-
-function showConfirmModal(title, message) {
-  return new Promise((resolve) => {
-    const overlay = document.getElementById('confirmOverlay');
-    document.getElementById('confirmTitle').textContent = title;
-    document.getElementById('confirmMsg').textContent = message;
-    
-    overlay.classList.add('open');
-
-    const yesBtn = document.getElementById('confirmYes');
-    const noBtn = document.getElementById('confirmNo');
-
-    const onYes = () => {
-      overlay.classList.remove('open');
-      yesBtn.removeEventListener('click', onYes);
-      noBtn.removeEventListener('click', onNo);
-      resolve(true);
-    };
-
-    const onNo = () => {
-      overlay.classList.remove('open');
-      yesBtn.removeEventListener('click', onYes);
-      noBtn.removeEventListener('click', onNo);
-      resolve(false);
-    };
-
-    yesBtn.addEventListener('click', onYes);
-    noBtn.addEventListener('click', onNo);
-  });
-}
-
-// ===== IMMERSIVE EXPLORER =====
-const EXPLORER_DATA = {
-  ballroom: {
-    title: 'The Pearl Ballroom',
-    desc: 'A masterpiece of gold and light, featuring crystal chandeliers and floor-to-ceiling views of the lagoon.',
-    cap: '500 Guests',
-    aes: 'Grand Luxury'
-  },
-  garden: {
-    title: 'Wavecrest Garden',
-    desc: 'Lush manicured greenery and stone pathways under a white wedding gazebo, perfect for golden hour celebrations.',
-    cap: '300 Guests',
-    aes: 'Natural Elegance'
-  }
-};
-
-function switchExplorerView(view) {
-  const data = EXPLORER_DATA[view];
-  if (!data) return;
-
-  // Update tabs
-  document.querySelectorAll('.explorer-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.view === view);
-  });
-
-  // Update backgrounds
-  document.querySelectorAll('.explorer-bg').forEach(bg => {
-    bg.classList.toggle('active', bg.id === `bg${view.charAt(0).toUpperCase() + view.slice(1)}`);
-  });
-
-  // Update text with fade
-  const detailBox = document.getElementById('explorerDetails');
-  detailBox.style.opacity = '0';
-  detailBox.style.transform = 'translateX(-20px)';
-  
-  setTimeout(() => {
-    document.getElementById('expTitle').textContent = data.title;
-    document.getElementById('expDesc').textContent = data.desc;
-    const stats = detailBox.querySelectorAll('strong');
-    stats[0].textContent = data.cap;
-    stats[1].textContent = data.aes;
-    
-    detailBox.style.opacity = '1';
-    detailBox.style.transform = 'translateX(0)';
-  }, 300);
-}
-
-document.querySelectorAll('.explorer-tab').forEach(tab => {
-  tab.onclick = () => switchExplorerView(tab.dataset.view);
-});
-
-// ===== WEATHER WIDGET MOCK =====
-function initWeatherWidget() {
-  const now = new Date();
-  const hour = now.getHours();
-  let temp, icon, cond;
-
-  if (hour >= 6 && hour < 18) {
-    temp = 30 + Math.floor(Math.random() * 3);
-    icon = '🌤️';
-    cond = 'Partly Cloudy';
-  } else {
-    temp = 25 + Math.floor(Math.random() * 3);
-    icon = '🌙';
-    cond = 'Clear Sky';
-  }
-
-  document.getElementById('weaTemp').textContent = `${temp}°C`;
-  document.getElementById('weaIcon').textContent = icon;
-  document.getElementById('weaCond').textContent = cond;
-}
-
-// Initialize new features
-initWeatherWidget();
-// Periodically update weather for realism
-setInterval(initWeatherWidget, 600000);
-
-// ===== CUSTOMER PANEL =====
-function openCustomerPanel(){
-  if(!currentUser||currentUser.role!=='customer') return;
-  document.getElementById('customerGreet').textContent = currentUser.name.split(' ')[0];
-  document.getElementById('customerDisplayName').textContent = currentUser.name;
-  document.getElementById('customerProfileInfo').innerHTML = `
-    <div class="profile-row"><span class="profile-label">Full Name</span><span class="profile-value">${escapeHTML(currentUser.name)}</span></div>
-    <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">${escapeHTML(currentUser.email)}</span></div>
-    <div class="profile-row"><span class="profile-label">Phone</span><span class="profile-value">${escapeHTML(currentUser.phone||'Not provided')}</span></div>
-    <div class="profile-row"><span class="profile-label">Account Type</span><span class="profile-value">Customer</span></div>`;
-  document.getElementById('customerPanel').classList.add('open');
-  document.body.style.overflow='hidden';
-  updateNav();
-}
-
-function closePanelGoTo(section){
-  document.getElementById('adminPanel').classList.remove('open');
-  document.getElementById('customerPanel').classList.remove('open');
-  document.body.style.overflow='';
-  setTimeout(()=>{ const el=document.getElementById(section); if(el) el.scrollIntoView({behavior:'smooth'}); },100);
-}
-
-// ===== NAV SCROLL =====
-const navbar = document.getElementById('navbar');
-window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',window.scrollY>60));
-
-// ===== HAMBURGER =====
-document.getElementById('hamburger').onclick=()=>document.getElementById('mobileMenu').classList.add('open');
-document.getElementById('mobileClose').onclick=()=>document.getElementById('mobileMenu').classList.remove('open');
-function closeMobile(){ document.getElementById('mobileMenu').classList.remove('open'); }
-
-// ===== REVEAL =====
-const observer = new IntersectionObserver(entries=>{
-  entries.forEach(el=>{ if(el.isIntersecting) el.target.classList.add('visible'); });
-},{threshold:0.1});
-document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-
-// ===== PETALS =====
-const pc=document.getElementById('petals');
-['rgba(201,168,76,0.6)','rgba(255,255,255,0.4)','rgba(168,184,154,0.5)','rgba(201,168,76,0.3)'].forEach((c,i)=>{
-  for(let j=0;j<3;j++){
-    const p=document.createElement('div'); p.className='petal';
-    p.style.cssText=`left:${Math.random()*100}%;background:${c};animation-duration:${6+Math.random()*8}s;animation-delay:${Math.random()*6}s;transform:rotate(${Math.random()*360}deg);`;
-    pc.appendChild(p);
-  }
-});
-
-// ===== GALLERY DRAG =====
-const strip=document.getElementById('galleryStrip');
-let down=false,sx,sl;
-strip.addEventListener('mousedown',e=>{down=true;sx=e.pageX-strip.offsetLeft;sl=strip.scrollLeft;});
-strip.addEventListener('mouseleave',()=>down=false);
-strip.addEventListener('mouseup',()=>down=false);
-strip.addEventListener('mousemove',e=>{ if(!down) return; e.preventDefault(); strip.scrollLeft=sl-(e.pageX-strip.offsetLeft-sx)*1.5; });
-
-// ===== BOOKING WIZARD =====
-let currentStep = 1;
-const wizardState = {
-  venue: 'Pearl Ballroom',
-  date: '',
-  extras: [],
-  contact: {}
-};
-
-function goToStep(step) {
-  if (step < 1 || step > 4) return;
-  
-  // Validation
-  if (step > currentStep) {
-    if (currentStep === 2 && !document.getElementById('wizDate').value) {
-      showToast('Please select a date first.', '#c0392b'); return;
-    }
-  }
-
-  // Populate Summary in Step 4
-  if (step === 4) {
-    const venue = wizardState.venue;
-    const date = document.getElementById('wizDate').value;
-    const event = document.getElementById('wizEvent').value;
-    const extras = Array.from(document.querySelectorAll('input[name="extra"]:checked')).map(el => el.value);
-    
-    document.getElementById('wizardSummary').innerHTML = `
-      <div class="summary-item"><label>Venue</label><span>${venue}</span></div>
-      <div class="summary-item"><label>Date</label><span>${date || 'Not Selected'}</span></div>
-      <div class="summary-item"><label>Event</label><span>${event}</span></div>
-      <div class="summary-item"><label>Extras</label><span>${extras.length ? extras.join(', ') : 'None'}</span></div>
-    `;
-  }
-
-  // Update UI
-  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
-  document.getElementById(`wizardStep${step}`).classList.add('active');
-  
-  document.querySelectorAll('.p-step').forEach((s, idx) => {
-    s.classList.toggle('active', idx + 1 === step);
-    s.classList.toggle('completed', idx + 1 < step);
-  });
-
-  document.getElementById('wizardBar').style.width = `${(step / 4) * 100}%`;
-  
-  // Nav buttons
-  document.getElementById('wizPrev').style.display = step === 1 ? 'none' : 'block';
-  document.getElementById('wizNext').style.display = step === 4 ? 'none' : 'block';
-  document.getElementById('wizSubmit').style.display = step === 4 ? 'block' : 'none';
-
-  currentStep = step;
-}
-
-// Venue Selection
-document.querySelectorAll('.venue-card').forEach(card => {
-  card.onclick = function() {
-    document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('active'));
-    this.classList.add('active');
-    wizardState.venue = this.dataset.venue;
-  };
-});
-
-// Nav Clicks
-document.getElementById('wizNext').onclick = () => goToStep(currentStep + 1);
-document.getElementById('wizPrev').onclick = () => goToStep(currentStep - 1);
-
-// Final Submit
-document.getElementById('wizSubmit').onclick = function() {
-  const firstName = document.getElementById('wizFirst').value.trim();
-  const lastName = document.getElementById('wizLast').value.trim();
-  const email = document.getElementById('wizEmail').value.trim();
-  const phone = document.getElementById('wizPhone').value.trim();
-  const date = document.getElementById('wizDate').value;
-  const event = document.getElementById('wizEvent').value;
-
-  if (!firstName || !lastName || !email) {
-    showToast('Please complete your contact details.', '#c0392b');
-    return;
-  }
-
-  const extras = Array.from(document.querySelectorAll('input[name="extra"]:checked')).map(el => el.value);
-
-  const newBooking = {
-    id: Date.now(),
-    client: `${firstName} ${lastName}`,
-    email: email,
-    phone: phone,
-    event: event,
-    venue: wizardState.venue,
-    date: date,
-    extras: extras,
-    status: 'pending'
-  };
-
-  bookings.push(newBooking);
-  saveBookings();
-
-  // Refresh views
-  if (document.getElementById('adminPanel').classList.contains('open')) {
-    refreshAdminBookings();
-    initAdminCharts();
-  }
-
-  showToast('✦ Reservation Secured! Download your Soft Quote PDF.');
-  
-  // PDF Generation
-  generateSoftQuotePDF(newBooking);
-
-  // Reset Wizard
-  setTimeout(() => {
-    goToStep(1);
-    document.querySelectorAll('input[name="extra"]').forEach(el => el.checked = false);
-    document.getElementById('wizFirst').value = '';
-    document.getElementById('wizLast').value = '';
-    document.getElementById('wizEmail').value = '';
-    document.getElementById('wizPhone').value = '';
-    if (document.getElementById('wizDate')._flatpickr) document.getElementById('wizDate')._flatpickr.clear();
-  }, 1000);
-};
-
-// ===== SOFT QUOTE PDF (jsPDF) =====
-function generateSoftQuotePDF(booking) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // Branding Colors
-  const gold = [201, 168, 76];
-  const dark = [30, 30, 26];
-
-  // Header
-  doc.setFillColor(30, 30, 26);
-  doc.rect(0, 0, 210, 40, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text('9 WAVES EVENTS PLACE', 105, 20, { align: 'center' });
-  doc.setFontSize(10);
-  doc.text('PREMIUM RESORT & EVENTS VENUE', 105, 30, { align: 'center' });
-
-  // Soft Quote Title
-  doc.setTextColor(gold[0], gold[1], gold[2]);
-  doc.setFontSize(16);
-  doc.text('SOFT QUOTE PREVIEW', 20, 55);
-  
-  doc.setDrawColor(201, 168, 76);
-  doc.line(20, 58, 80, 58);
-
-  // Client Info
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(`Client: ${booking.client}`, 20, 70);
-  doc.text(`Date Prepared: ${new Date().toLocaleDateString()}`, 140, 70);
-
-  // Event Details Table
-  doc.setFillColor(245, 245, 245);
-  doc.rect(15, 80, 180, 50, 'F');
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text('EVENT TYPE', 20, 90);
-  doc.text('RESERVED DATE', 70, 90);
-  doc.text('SELECTED VENUE', 130, 90);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(booking.event.toUpperCase(), 20, 100);
-  doc.text(booking.date || 'To be discussed', 70, 100);
-  doc.text(booking.venue, 130, 100);
-
-  // Add-ons / Extras
-  doc.setTextColor(gold[0], gold[1], gold[2]);
-  doc.setFontSize(14);
-  doc.text('ENHANCEMENTS & EXTRAS', 20, 145);
-  
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
-  let y = 155;
-  if (booking.extras && booking.extras.length > 0) {
-    booking.extras.forEach(extra => {
-      doc.text(`✦ ${extra}`, 25, y);
-      y += 8;
-    });
-  } else {
-    doc.text('No optional extras selected.', 25, y);
-  }
-
-  // Pricing Estimation
-  let basePrice = 85000; // Default for Garden
-  if (booking.venue === 'Pearl Ballroom') basePrice = 125000;
-  if (booking.venue === 'Tidal Pool Terrace') basePrice = 65000;
-  
-  const extrasCost = (booking.extras ? booking.extras.length : 0) * 15000;
-  const totalEst = basePrice + extrasCost;
-
-  doc.setFillColor(252, 250, 247);
-  doc.rect(120, 180, 75, 40, 'F');
-  doc.setDrawColor(229, 223, 213);
-  doc.rect(120, 180, 75, 40, 'S');
-
-  doc.setFontSize(10);
-  doc.text('ESTIMATED STARTING AT', 125, 190);
-  doc.setFontSize(18);
-  doc.setTextColor(gold[0], gold[1], gold[2]);
-  doc.text(`PHP ${totalEst.toLocaleString()}`, 125, 205);
-
-  // Footer / Disclaimer
-  doc.setTextColor(120, 120, 120);
-  doc.setFontSize(9);
-  doc.text('Terms and Conditions:', 20, 240);
-  doc.text('1. This is a non-binding soft quote for planning purposes only.', 20, 248);
-  doc.text('2. Prices are subject to final contract and guest count verification.', 20, 254);
-  doc.text('3. Venue reservation is confirmed only upon payment of reservation fee.', 20, 260);
-
-  doc.setFontSize(10);
-  doc.text('Thank you for choosing 9 Waves Events Place.', 105, 280, { align: 'center' });
-
-  // Save the PDF
-  doc.save(`9Waves_Quote_${booking.client.replace(/\s/g, '_')}.pdf`);
-}
-
-// ===== SMOOTH SCROLL =====
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-  a.onclick=function(e){
-    const t=document.querySelector(this.getAttribute('href'));
-    if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth'}); }
-  };
-});
-
-// ===== REAL-TIME VALIDATION =====
-function validateInput(e) {
-  const el = e.target;
-  if (!el.value) {
-    el.classList.remove('valid', 'invalid');
-    return;
-  }
-  
-  let isValid = el.checkValidity();
-  // Extra check for password length
-  if (el.type === 'password' && el.id !== 'adminKey' && el.id !== 'loginPassword') {
-    isValid = el.value.length >= 6;
-  }
-  
-  if (isValid) {
-    el.classList.add('valid');
-    el.classList.remove('invalid');
-  } else {
-    el.classList.add('invalid');
-    el.classList.remove('valid');
-  }
-}
-
-document.querySelectorAll('input, select, textarea').forEach(input => {
-  input.addEventListener('input', validateInput);
-  input.addEventListener('change', validateInput);
-});
-
-// ===== INIT =====
-updateNav();
-if (window.flatpickr) {
-  flatpickr("#wizDate", {
-    minDate: "today",
-    altInput: true,
-    altFormat: "F j, Y",
-    dateFormat: "Y-m-d",
-    disableMobile: "true",
-    inline: false
-  });
-}
-
-// ===== LIGHTBOX LOGIC =====
-const lb = document.getElementById('lightbox');
-const lbImg = document.getElementById('lightboxImage');
-const lbCap = document.getElementById('lightboxCaption');
-const lbClose = document.getElementById('lightboxClose');
-let currentLbIndex = 0;
-let lbItems = [];
-
-function getBgUrl(el) {
-  if (!el) return '';
-  const bg = window.getComputedStyle(el).backgroundImage;
-  if (!bg || bg === 'none') return '';
-  return bg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
-}
-
-function updateLightbox() {
-  const item = lbItems[currentLbIndex];
-  if (!item) return;
-  lbImg.src = item.url;
-  lbCap.textContent = item.caption;
-}
-
-function openLightbox(index) {
-  currentLbIndex = index;
-  updateLightbox();
-  lb.classList.add('open');
+  $('adminPanel').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
-function closeLightbox() {
-  lb.classList.remove('open');
+function openCustomerPanel() {
+  if (!currentUser || currentUser.role !== 'customer') return;
+  $('customerGreet').textContent = currentUser.name.split(' ')[0];
+  $('customerDisplayName').textContent = currentUser.name;
+  $('customerProfileInfo').innerHTML = `
+    <div class="profile-row"><span class="profile-label">Full Name</span><span class="profile-value">${escapeHTML(currentUser.name)}</span></div>
+    <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">${escapeHTML(currentUser.email)}</span></div>
+    <div class="profile-row"><span class="profile-label">Phone</span><span class="profile-value">${escapeHTML(currentUser.phone || 'Not provided')}</span></div>
+    <div class="profile-row"><span class="profile-label">Account Type</span><span class="profile-value">Customer</span></div>`;
+  renderCustomerInquiries();
+  $('customerPanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePanelGoTo(section) {
+  $('adminPanel').classList.remove('open');
+  $('customerPanel').classList.remove('open');
   document.body.style.overflow = '';
+  setTimeout(() => { const target = $(section); if (target) target.scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
-
-function initLightbox() {
-  // Clear any existing list
-  lbItems = [];
-  
-  // Find all components that should be lightboxed
-  const galleryItems = document.querySelectorAll('.gallery-item');
-  const venueCards = document.querySelectorAll('.venue-card');
-  
-  // Build the unified items list
-  galleryItems.forEach(el => {
-    const bg = el.querySelector('.gallery-bg');
-    const cap = el.querySelector('.gallery-item-label')?.textContent || 'Gallery View';
-    lbItems.push({ el, url: getBgUrl(bg), caption: cap });
-  });
-  
-  venueCards.forEach(el => {
-    const bg = el.querySelector('.venue-img-bg');
-    const cap = el.querySelector('.venue-name')?.textContent || 'Venue View';
-    lbItems.push({ el, url: getBgUrl(bg), caption: cap });
-  });
-
-  // Attach single event listener to each
-  lbItems.forEach((item, idx) => {
-    item.el.addEventListener('click', (e) => {
-      // Don't open if clicking a child button/link (like "Book Now")
-      if (e.target.closest('a') || e.target.closest('button')) return;
-      openLightbox(idx);
-    });
-  });
+function signOut() {
+  const name = currentUser ? currentUser.name.split(' ')[0] : '';
+  clearSession();
+  updateNav();
+  $('adminPanel').classList.remove('open');
+  $('customerPanel').classList.remove('open');
+  document.body.style.overflow = '';
+  updateAuthNote();
+  showToast(name ? `Signed out, ${name}.` : 'Signed out.');
 }
-
-lbClose.onclick = closeLightbox;
-lb.onclick = (e) => { if (e.target === lb) closeLightbox(); };
-document.getElementById('lbPrev').onclick = (e) => {
-  e.stopPropagation();
-  currentLbIndex = (currentLbIndex - 1 + lbItems.length) % lbItems.length;
-  updateLightbox();
-};
-document.getElementById('lbNext').onclick = (e) => {
-  e.stopPropagation();
-  currentLbIndex = (currentLbIndex + 1) % lbItems.length;
-  updateLightbox();
-};
-
-initLightbox();
-
-// ===== ESTIMATOR LOGIC =====
-const PRICES = {
-  ripple: { base: 45000, pax: 100, extra: 350 },
-  crest: { base: 85000, pax: 200, extra: 450 },
-  sovereign: { base: 150000, pax: 500, extra: 600 }
-};
-
-function updateCalculator() {
-  const pkgKey = document.getElementById('estPackage').value;
-  const guests = parseInt(document.getElementById('estGuests').value);
-  const pkg = PRICES[pkgKey];
-  
-  document.getElementById('guestCountLabel').textContent = guests;
-  
-  let total = pkg.base;
-  const extraGuests = Math.max(0, guests - pkg.pax);
-  const extraCost = extraGuests * pkg.extra;
-  total += extraCost;
-  
-  const addons = document.querySelectorAll('.est-addon:checked');
-  let addonTotal = 0;
-  addons.forEach(a => addonTotal += parseInt(a.dataset.price));
-  total += addonTotal;
-  
-  // Format price
-  const fmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
-  document.getElementById('totalPrice').textContent = fmt.format(total).replace('PHP', '₱');
-  
-  const pkgName = pkgKey.charAt(0).toUpperCase() + pkgKey.slice(1);
-  document.getElementById('estSummary').innerHTML = `
-    <strong>${pkgName} Package</strong> (${guests} Guests)<br>
-    Base + Extra Head: ${fmt.format(pkg.base + extraCost).replace('PHP', '₱')}<br>
-    Add-ons: ${fmt.format(addonTotal).replace('PHP', '₱')}
-  `;
-}
-
-document.getElementById('estPackage').onchange = updateCalculator;
-document.getElementById('estGuests').oninput = updateCalculator;
-document.querySelectorAll('.est-addon').forEach(a => a.onchange = updateCalculator);
-
-updateCalculator();
-
-// ===== AVAILABILITY CALENDAR =====
-let availCal;
-function updateAvailabilityCalendar() {
-  if (!availCal) {
-    availCal = flatpickr("#availabilityCal", {
-      inline: true,
-      minDate: "today",
-      onDayCreate: (dObj, dStr, fp, dayElem) => {
-        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-        const match = bookings.find(b => b.date === dateStr);
-        if (match) {
-          dayElem.classList.add(match.status);
-          dayElem.title = `${match.event} (${match.status})`;
-        }
-      }
-    });
-  } else {
-    availCal.redraw();
+function refreshAdminUsers() {
+  $('statUsers').textContent = users.length;
+  const tbody = $('adminUsersBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:28px 18px;">No registered customers yet.</td></tr>';
+    return;
   }
+  tbody.innerHTML = users.map((user) => `
+    <tr>
+      <td>${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)}</td>
+      <td>${escapeHTML(user.email)}</td>
+      <td>${escapeHTML(user.phone || 'Not provided')}</td>
+      <td>${escapeHTML(user.registered || 'Today')}</td>
+    </tr>`).join('');
 }
-
-// Initialize on load
-document.addEventListener('DOMContentLoaded', () => {
-  updateAvailabilityCalendar();
-  goToStep(1); // Start Wizard at Step 1
-});
-
-// Update Flatpickr initialization
-if (window.flatpickr) {
-  flatpickr("#wizDate", {
-    minDate: "today",
-    altInput: true,
-    altFormat: "F j, Y",
-    dateFormat: "Y-m-d",
-    disableMobile: "true",
-    inline: false
+function getStatusInfo(status) { return STATUS_META[status] || STATUS_META.submitted; }
+function nextAdminAction(status) {
+  if (status === 'submitted') return { label: 'Start Review', next: 'review', className: 'tbl-confirm' };
+  if (status === 'review') return { label: 'Send Proposal', next: 'proposal', className: 'tbl-confirm' };
+  if (status === 'proposal') return { label: 'Close Inquiry', next: 'closed', className: 'tbl-cancel' };
+  return null;
+}
+function refreshAdminBookings() {
+  $('statBookings').textContent = inquiries.length;
+  $('statPending').textContent = inquiries.filter((item) => item.status === 'review').length;
+  const tbody = $('adminBookingsBody');
+  if (!inquiries.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px 18px;">No inquiries yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...inquiries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((item) => {
+    const status = getStatusInfo(item.status);
+    const action = nextAdminAction(item.status);
+    const actionCell = action ? `<button class="tbl-btn ${action.className}" onclick="changeInquiryStatus(${item.id}, '${action.next}')">${action.label}</button>` : '<span style="color:#ccc;font-size:13px;">Done</span>';
+    return `
+      <tr>
+        <td>${escapeHTML(item.client)}</td>
+        <td>${escapeHTML(item.event)}</td>
+        <td>${escapeHTML(item.venue)}</td>
+        <td>${escapeHTML(item.preferredDate)}</td>
+        <td><span class="status-badge ${status.className}">${status.label}</span></td>
+        <td>${actionCell}</td>
+      </tr>`;
+  }).join('');
+}
+async function changeInquiryStatus(id, status) {
+  const inquiry = inquiries.find((item) => item.id === id);
+  if (!inquiry) return;
+  if (status === 'closed') {
+    const confirmed = await showConfirmModal('Close inquiry', `Close the inquiry for ${inquiry.client}?`);
+    if (!confirmed) return;
+  }
+  inquiry.status = status;
+  saveInquiries();
+  refreshAdminBookings();
+  renderCustomerInquiries();
+  initAdminCharts();
+  showToast(`Inquiry for ${inquiry.client} updated.`);
+}
+function showConfirmModal(title, message) {
+  return new Promise((resolve) => {
+    $('confirmTitle').textContent = title;
+    $('confirmMsg').textContent = message;
+    $('confirmOverlay').classList.add('open');
+    const onYes = () => cleanup(true);
+    const onNo = () => cleanup(false);
+    function cleanup(value) {
+      $('confirmOverlay').classList.remove('open');
+      $('confirmYes').removeEventListener('click', onYes);
+      $('confirmNo').removeEventListener('click', onNo);
+      resolve(value);
+    }
+    $('confirmYes').addEventListener('click', onYes);
+    $('confirmNo').addEventListener('click', onNo);
   });
-} 
-
-// ===== ADMIN ANALYTICS (CHART.JS) =====
-let trendChart, statusChart;
+}
 function initAdminCharts() {
-  const trendCtx = document.getElementById('bookingTrendChart');
-  const typeCtx = document.getElementById('eventTypeChart');
-  if (!trendCtx || !typeCtx) return;
-
-  // Prepare data: Bookings per month
+  const trendCtx = $('bookingTrendChart');
+  const typeCtx = $('eventTypeChart');
+  if (!trendCtx || !typeCtx || typeof Chart === 'undefined') return;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthlyData = new Array(12).fill(0);
-  bookings.filter(b => b.status === 'confirmed').forEach(b => {
-    const m = new Date(b.date).getMonth();
-    monthlyData[m]++;
+  inquiries.forEach((item) => {
+    const month = new Date(item.preferredDate).getMonth();
+    if (!Number.isNaN(month)) monthlyData[month] += 1;
   });
-
-  // Prepare data: Event Types
   const types = {};
-  bookings.forEach(b => {
-    types[b.event] = (types[b.event] || 0) + 1;
-  });
-
+  inquiries.forEach((item) => { types[item.event] = (types[item.event] || 0) + 1; });
   if (trendChart) trendChart.destroy();
   if (statusChart) statusChart.destroy();
-
-  trendChart = new Chart(trendCtx, {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [{
-        label: 'Confirmed Bookings',
-        data: monthlyData,
-        backgroundColor: '#7a8c6e',
-        borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-    }
+  trendChart = new Chart(trendCtx, { type: 'bar', data: { labels: months, datasets: [{ label: 'Inquiries', data: monthlyData, backgroundColor: '#7a8c6e', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+  statusChart = new Chart(typeCtx, { type: 'doughnut', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: ['#7a8c6e', '#c9a84c', '#4e5e45', '#e2c97e', '#1e1e1a'], borderWidth: 0 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } } });
+}
+function renderCustomerInquiries() {
+  const list = $('customerInquiryList');
+  if (!list) return;
+  if (!currentUser || currentUser.role !== 'customer') { list.innerHTML = ''; return; }
+  const mine = inquiries.filter((item) => item.customerEmail === currentUser.email);
+  if (!mine.length) {
+    list.innerHTML = '<p class="customer-empty-state">No saved inquiries yet. Start one from the inquiry form below.</p>';
+    return;
+  }
+  list.innerHTML = mine.map((item) => {
+    const status = getStatusInfo(item.status);
+    const packageName = PACKAGE_DATA[item.packageKey]?.name || 'Custom Plan';
+    return `<article class="customer-inquiry-item"><div class="customer-inquiry-header"><strong>${escapeHTML(item.event)}</strong><span class="status-badge ${status.className}">${status.label}</span></div><div class="customer-inquiry-meta">${escapeHTML(item.venue)} | ${escapeHTML(item.preferredDate)}</div><div class="customer-inquiry-meta">${escapeHTML(packageName)} | ${escapeHTML(item.guestCount)} guests</div></article>`;
+  }).join('');
+}
+function prefillInquiryContact() {
+  if (!currentUser || currentUser.role !== 'customer') { updateAuthNote(); return; }
+  const user = users.find((item) => item.email === currentUser.email);
+  $('wizFirst').value = user?.firstName || currentUser.name.split(' ')[0] || '';
+  $('wizLast').value = user?.lastName || currentUser.name.split(' ').slice(1).join(' ') || '';
+  $('wizEmail').value = currentUser.email || '';
+  $('wizPhone').value = user?.phone || currentUser.phone || '';
+  updateAuthNote();
+}
+function setPackageCardState(key) { document.querySelectorAll('[data-package-card]').forEach((card) => card.classList.toggle('selected-package', card.dataset.packageCard === key)); }
+function getSelectedWizardAddOns() { return Array.from(document.querySelectorAll('.wiz-addon:checked')).map((input) => input.value); }
+function setWizardAddOns(values) { document.querySelectorAll('.wiz-addon').forEach((input) => { input.checked = values.includes(input.value); }); }
+function getSelectedEstimatorAddOns() { return Array.from(document.querySelectorAll('.est-addon:checked')).map((input) => input.value); }
+function setEstimatorAddOns(values) { document.querySelectorAll('.est-addon').forEach((input) => { input.checked = values.includes(input.value); }); }
+function updateBudgetField(total) {
+  if (total < 75000) $('wizBudget').value = 'Under PHP 75,000';
+  else if (total <= 150000) $('wizBudget').value = 'PHP 75,000 - PHP 150,000';
+  else if (total <= 250000) $('wizBudget').value = 'PHP 150,000 - PHP 250,000';
+  else $('wizBudget').value = 'Above PHP 250,000';
+}
+function updateCalculator() {
+  const packageKey = $('estPackage').value;
+  const guests = parseInt($('estGuests').value, 10) || 0;
+  const pkg = PACKAGE_DATA[packageKey];
+  $('guestCountLabel').textContent = guests;
+  const extraGuests = Math.max(0, guests - pkg.pax);
+  const addOnTotal = Array.from(document.querySelectorAll('.est-addon:checked')).reduce((sum, input) => sum + parseInt(input.dataset.price, 10), 0);
+  const total = pkg.base + (extraGuests * pkg.extra) + addOnTotal;
+  $('totalPrice').textContent = formatCurrency(total);
+  $('estSummary').innerHTML = `<strong>${pkg.name}</strong> (${guests} Guests)<br>Base + extra guests: ${formatCurrency(pkg.base + extraGuests * pkg.extra)}<br>Add-ons: ${formatCurrency(addOnTotal)}`;
+  if (!isSyncingEstimate) syncWizardFromEstimator(total);
+  setPackageCardState(packageKey);
+}
+function syncWizardFromEstimator(totalOverride) {
+  isSyncingEstimate = true;
+  $('wizPackage').value = $('estPackage').value;
+  $('wizGuests').value = $('estGuests').value;
+  setWizardAddOns(getSelectedEstimatorAddOns());
+  updateBudgetField(totalOverride ?? 0);
+  isSyncingEstimate = false;
+}
+function syncEstimatorFromWizard() {
+  if (isSyncingEstimate) return;
+  isSyncingEstimate = true;
+  $('estPackage').value = $('wizPackage').value;
+  $('estGuests').value = $('wizGuests').value;
+  setEstimatorAddOns(getSelectedWizardAddOns());
+  isSyncingEstimate = false;
+  updateCalculator();
+}
+function choosePackage(key, scrollToContact = false) {
+  if (!PACKAGE_DATA[key]) return;
+  $('estPackage').value = key;
+  updateCalculator();
+  if (scrollToContact) closePanelGoTo('contact');
+}
+function captureWizardState() { wizardState.venue = document.querySelector('.wizard-venue-card.active')?.dataset.venue || 'Pearl Ballroom'; }
+function getDraftInquiryData() {
+  captureWizardState();
+  const addOns = getSelectedWizardAddOns();
+  const firstName = $('wizFirst').value.trim() || currentUser?.name?.split(' ')[0] || '';
+  const lastName = $('wizLast').value.trim() || currentUser?.name?.split(' ').slice(1).join(' ') || '';
+  const email = $('wizEmail').value.trim() || currentUser?.email || '';
+  const phone = $('wizPhone').value.trim() || currentUser?.phone || '';
+  const estimate = calculateEstimate($('wizPackage').value, $('wizGuests').value, addOns);
+  return {
+    client: `${firstName} ${lastName}`.trim() || 'Guest',
+    firstName,
+    lastName,
+    email,
+    phone,
+    event: $('wizEvent').value,
+    venue: wizardState.venue,
+    preferredDate: $('wizPreferredDate').value || 'Not set',
+    backupDate: $('wizBackupDate').value || 'Not set',
+    packageKey: $('wizPackage').value,
+    packageName: estimate.packageName,
+    guestCount: $('wizGuests').value || 'Not set',
+    budgetRange: $('wizBudget').value || 'Not set',
+    addOns,
+    notes: $('wizNotes').value.trim() || 'No additional notes provided.',
+    estimate
+  };
+}
+function populateSummary() {
+  const draft = getDraftInquiryData();
+  $('wizardSummary').innerHTML = `
+    <div class="summary-item"><label>Venue</label><span>${escapeHTML(draft.venue)}</span></div>
+    <div class="summary-item"><label>Event</label><span>${escapeHTML(draft.event)}</span></div>
+    <div class="summary-item"><label>Package</label><span>${escapeHTML(draft.packageName)}</span></div>
+    <div class="summary-item"><label>Guests</label><span>${escapeHTML(draft.guestCount)}</span></div>
+    <div class="summary-item"><label>Preferred Date</label><span>${escapeHTML(draft.preferredDate)}</span></div>
+    <div class="summary-item"><label>Backup Date</label><span>${escapeHTML(draft.backupDate)}</span></div>
+    <div class="summary-item"><label>Budget</label><span>${escapeHTML(draft.budgetRange)}</span></div>
+    <div class="summary-item"><label>Add-ons</label><span>${escapeHTML(draft.addOns.length ? draft.addOns.join(', ') : 'None')}</span></div>
+    <div class="summary-item"><label>Estimated Total</label><span>${escapeHTML(formatCurrency(draft.estimate.total))}</span></div>`;
+}
+function validateCurrentStep() {
+  if (currentStep === 2) {
+    const guests = parseInt($('wizGuests').value, 10);
+    if (!guests || guests < 50) { showToast('Enter a realistic guest count.', '#c0392b'); return false; }
+  }
+  if (currentStep === 3) {
+    const preferred = $('wizPreferredDate').value;
+    const backup = $('wizBackupDate').value;
+    if (!preferred || !backup) { showToast('Add both preferred and backup dates.', '#c0392b'); return false; }
+    if (preferred === backup) { showToast('Preferred and backup dates must be different.', '#c0392b'); return false; }
+  }
+  return true;
+}
+function goToStep(step) {
+  if (step < 1 || step > 4) return;
+  if (step > currentStep && !validateCurrentStep()) return;
+  if (step === 4) { populateSummary(); prefillInquiryContact(); }
+  document.querySelectorAll('.wizard-step').forEach((panel) => panel.classList.remove('active'));
+  $(`wizardStep${step}`).classList.add('active');
+  document.querySelectorAll('.p-step').forEach((item, index) => {
+    item.classList.toggle('active', index + 1 === step);
+    item.classList.toggle('completed', index + 1 < step);
   });
-
-  statusChart = new Chart(typeCtx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(types),
-      datasets: [{
-        data: Object.values(types),
-        backgroundColor: ['#7a8c6e', '#c9a84c', '#4e5e45', '#e2c97e', '#1e1e1a'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      cutout: '70%',
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+  $('wizardBar').style.width = `${(step / 4) * 100}%`;
+  $('wizPrev').style.display = step === 1 ? 'none' : 'block';
+  $('wizNext').style.display = step === 4 ? 'none' : 'block';
+  $('wizDownloadPdf').style.display = step === 4 ? 'block' : 'none';
+  $('wizSubmit').style.display = step === 4 ? 'block' : 'none';
+  currentStep = step;
+}
+function openPrintFallback(draft) {
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    showToast('Popup blocked. Allow popups to export the soft quote.', '#c0392b');
+    return;
+  }
+  const addOns = draft.addOns.length ? draft.addOns.join(', ') : 'None';
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>9 Waves Soft Quote</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #222; margin: 32px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    h2 { margin: 0 0 20px; font-size: 18px; font-weight: normal; color: #6f7b63; }
+    p { line-height: 1.5; }
+    .note { font-size: 12px; color: #666; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: 180px 1fr; gap: 10px 18px; margin-bottom: 28px; }
+    .label { font-weight: bold; }
+    .total { margin-top: 10px; font-size: 18px; font-weight: bold; }
+    .footer { margin-top: 30px; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>9 Waves Events Place</h1>
+  <h2>Soft Quote / Inquiry Summary</h2>
+  <p class="note">Planning estimate only. Final pricing and availability are confirmed after team review.</p>
+  <div class="grid">
+    <div class="label">Client</div><div>${escapeHTML(draft.client)}</div>
+    <div class="label">Email</div><div>${escapeHTML(draft.email || 'Not provided')}</div>
+    <div class="label">Phone</div><div>${escapeHTML(draft.phone || 'Not provided')}</div>
+    <div class="label">Event Type</div><div>${escapeHTML(draft.event)}</div>
+    <div class="label">Venue</div><div>${escapeHTML(draft.venue)}</div>
+    <div class="label">Package</div><div>${escapeHTML(draft.packageName)}</div>
+    <div class="label">Guest Count</div><div>${escapeHTML(draft.guestCount)}</div>
+    <div class="label">Preferred Date</div><div>${escapeHTML(draft.preferredDate)}</div>
+    <div class="label">Backup Date</div><div>${escapeHTML(draft.backupDate)}</div>
+    <div class="label">Budget Range</div><div>${escapeHTML(draft.budgetRange)}</div>
+    <div class="label">Add-ons</div><div>${escapeHTML(addOns)}</div>
+    <div class="label">Base Estimate</div><div>${escapeHTML(formatCurrency(draft.estimate.baseTotal))}</div>
+    <div class="label">Add-on Estimate</div><div>${escapeHTML(formatCurrency(draft.estimate.addOnTotal))}</div>
+  </div>
+  <div class="total">Estimated Total: ${escapeHTML(formatCurrency(draft.estimate.total))}</div>
+  <p><strong>Notes:</strong> ${escapeHTML(draft.notes)}</p>
+  <p class="footer">This document is a soft quote for planning purposes only. Rates may change based on final guest count, event requirements, venue availability, and coordination review.</p>
+  <script>
+    window.onload = function () {
+      window.print();
+    };
+  <\/script>
+</body>
+</html>`;
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+function downloadSoftQuote() {
+  const draft = getDraftInquiryData();
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    openPrintFallback(draft);
+    return;
+  }
+  if (currentStep !== 4) {
+    populateSummary();
+    goToStep(4);
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  const addLine = (label, value) => {
+    const lines = doc.splitTextToSize(String(value), 120);
+    const neededHeight = Math.max(8, lines.length * 6);
+    if (y + neededHeight > 280) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, 16, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(lines, 70, y);
+    y += neededHeight;
+  };
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text('9 Waves Events Place', 16, y);
+  y += 10;
+  doc.setFontSize(14);
+  doc.text('Soft Quote / Inquiry Summary', 16, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Planning estimate only. Final pricing and availability are confirmed after team review.', 16, y);
+  y += 12;
+  doc.setDrawColor(210, 196, 170);
+  doc.line(16, y, 194, y);
+  y += 10;
+  doc.setFontSize(11);
+  addLine('Client', draft.client);
+  addLine('Email', draft.email || 'Not provided');
+  addLine('Phone', draft.phone || 'Not provided');
+  addLine('Event Type', draft.event);
+  addLine('Venue', draft.venue);
+  addLine('Package', draft.packageName);
+  addLine('Guest Count', draft.guestCount);
+  addLine('Preferred Date', draft.preferredDate);
+  addLine('Backup Date', draft.backupDate);
+  addLine('Budget Range', draft.budgetRange);
+  addLine('Add-ons', draft.addOns.length ? draft.addOns.join(', ') : 'None');
+  addLine('Base Estimate', formatCurrency(draft.estimate.baseTotal));
+  addLine('Add-on Estimate', formatCurrency(draft.estimate.addOnTotal));
+  addLine('Estimated Total', formatCurrency(draft.estimate.total));
+  addLine('Notes', draft.notes);
+  y += 4;
+  const disclaimer = doc.splitTextToSize('This document is a soft quote for planning purposes only. Rates may change based on final guest count, event requirements, venue availability, and coordination review.', 178);
+  if (y + (disclaimer.length * 5) > 280) {
+    doc.addPage();
+    y = 20;
+  }
+  doc.setFontSize(9);
+  doc.text(disclaimer, 16, y);
+  const filenameDate = (draft.preferredDate || new Date().toISOString().split('T')[0]).replace(/[^0-9-]/g, '');
+  doc.save(`9waves-soft-quote-${filenameDate || 'inquiry'}.pdf`);
+}
+function resetInquiryForm() {
+  $('wizEvent').value = 'Wedding';
+  $('wizPackage').value = $('estPackage').value;
+  $('wizGuests').value = $('estGuests').value;
+  $('wizBudget').value = 'PHP 75,000 - PHP 150,000';
+  setWizardAddOns(getSelectedEstimatorAddOns());
+  if ($('wizPreferredDate')._flatpickr) $('wizPreferredDate')._flatpickr.clear();
+  else $('wizPreferredDate').value = '';
+  if ($('wizBackupDate')._flatpickr) $('wizBackupDate')._flatpickr.clear();
+  else $('wizBackupDate').value = '';
+  $('wizNotes').value = '';
+  document.querySelectorAll('.wizard-venue-card').forEach((card, index) => card.classList.toggle('active', index === 0));
+  captureWizardState();
+  prefillInquiryContact();
+  goToStep(1);
+}
+function submitInquiry() {
+  if (!currentUser || currentUser.role !== 'customer') {
+    showToast('Sign in to send your inquiry.', '#c0392b');
+    openAuth();
+    return;
+  }
+  if (!validateCurrentStep()) return;
+  const firstName = $('wizFirst').value.trim();
+  const lastName = $('wizLast').value.trim();
+  const email = $('wizEmail').value.trim();
+  const phone = $('wizPhone').value.trim();
+  if (!firstName || !lastName || !email || !phone) {
+    showToast('Complete your contact details first.', '#c0392b');
+    return;
+  }
+  captureWizardState();
+  const inquiry = {
+    id: Date.now(),
+    client: `${firstName} ${lastName}`,
+    customerEmail: currentUser.email,
+    event: $('wizEvent').value,
+    venue: wizardState.venue,
+    preferredDate: $('wizPreferredDate').value,
+    backupDate: $('wizBackupDate').value,
+    packageKey: $('wizPackage').value,
+    guestCount: parseInt($('wizGuests').value, 10) || 0,
+    budgetRange: $('wizBudget').value,
+    addOns: getSelectedWizardAddOns(),
+    notes: $('wizNotes').value.trim(),
+    email,
+    phone,
+    status: 'submitted',
+    createdAt: new Date().toISOString()
+  };
+  inquiries.push(inquiry);
+  saveInquiries();
+  const userIndex = users.findIndex((item) => item.email === currentUser.email);
+  if (userIndex >= 0) {
+    users[userIndex].phone = phone;
+    users[userIndex].firstName = firstName;
+    users[userIndex].lastName = lastName;
+    saveUsers();
+    saveSession({ name: `${firstName} ${lastName}`, email: currentUser.email, role: 'customer', phone });
+  }
+  refreshAdminBookings();
+  refreshAdminUsers();
+  renderCustomerInquiries();
+  initAdminCharts();
+  updateNav();
+  showToast('Inquiry saved. Our team will review it within 24 hours.');
+  
+  // Generate and download the soft quote before resetting the form
+  downloadSoftQuote();
+  
+  resetInquiryForm();
+}
+function validateInput(event) {
+  const el = event.target;
+  if (!el.value) { el.classList.remove('valid', 'invalid'); return; }
+  let valid = el.checkValidity();
+  if (el.type === 'password' && el.id !== 'loginPassword') valid = el.value.length >= 6;
+  el.classList.toggle('valid', valid);
+  el.classList.toggle('invalid', !valid);
+}
+function initDatePickers() {
+  if (!window.flatpickr) return;
+  flatpickr('#wizPreferredDate', { minDate: 'today', dateFormat: 'Y-m-d', altInput: true, altFormat: 'F j, Y', disableMobile: true });
+  flatpickr('#wizBackupDate', { minDate: 'today', dateFormat: 'Y-m-d', altInput: true, altFormat: 'F j, Y', disableMobile: true });
+}
+function switchExplorerView(view) {
+  const data = {
+    ballroom: { title: 'The Pearl Ballroom', desc: 'A masterpiece of gold and light, featuring crystal chandeliers and elegant sightlines for grand celebrations.', cap: '500 Guests', aes: 'Grand Luxury' },
+    garden: { title: 'Wavecrest Garden', desc: 'Lush greenery, soft light, and open-air ceremony potential for romantic and nature-led celebrations.', cap: '300 Guests', aes: 'Natural Elegance' }
+  }[view];
+  if (!data) return;
+  document.querySelectorAll('.explorer-tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === view));
+  document.querySelectorAll('.explorer-bg').forEach((bg) => bg.classList.toggle('active', bg.id === `bg${view.charAt(0).toUpperCase() + view.slice(1)}`));
+  $('expTitle').textContent = data.title;
+  $('expDesc').textContent = data.desc;
+  const stats = $('explorerDetails').querySelectorAll('strong');
+  stats[0].textContent = data.cap;
+  stats[1].textContent = data.aes;
+}
+function initLightbox() {
+  const lb = $('lightbox');
+  const lbImg = $('lightboxImage');
+  const lbCap = $('lightboxCaption');
+  const items = Array.from(document.querySelectorAll('.gallery-item')).map((item) => ({
+    element: item,
+    url: getComputedStyle(item.querySelector('.gallery-bg')).backgroundImage.replace(/url\(["']?/, '').replace(/["']?\)$/, ''),
+    caption: item.querySelector('.gallery-item-label')?.textContent || 'Gallery'
+  }));
+  let currentIndex = 0;
+  function updateLightbox() {
+    const item = items[currentIndex];
+    if (!item) return;
+    lbImg.src = item.url;
+    lbCap.textContent = item.caption;
+  }
+  items.forEach((item, index) => item.element.addEventListener('click', () => { currentIndex = index; updateLightbox(); lb.classList.add('open'); document.body.style.overflow = 'hidden'; }));
+  $('lightboxClose').onclick = () => { lb.classList.remove('open'); document.body.style.overflow = ''; };
+  $('lbPrev').onclick = (event) => { event.stopPropagation(); currentIndex = (currentIndex - 1 + items.length) % items.length; updateLightbox(); };
+  $('lbNext').onclick = (event) => { event.stopPropagation(); currentIndex = (currentIndex + 1) % items.length; updateLightbox(); };
+  lb.onclick = (event) => { if (event.target === lb) { lb.classList.remove('open'); document.body.style.overflow = ''; } };
+}
+function initGalleryDrag() {
+  const strip = $('galleryStrip');
+  let down = false;
+  let startX = 0;
+  let scrollLeft = 0;
+  strip.addEventListener('mousedown', (event) => { down = true; startX = event.pageX - strip.offsetLeft; scrollLeft = strip.scrollLeft; });
+  ['mouseleave', 'mouseup'].forEach((name) => strip.addEventListener(name, () => { down = false; }));
+  strip.addEventListener('mousemove', (event) => {
+    if (!down) return;
+    event.preventDefault();
+    strip.scrollLeft = scrollLeft - ((event.pageX - strip.offsetLeft) - startX) * 1.5;
+  });
+}
+function initPetals() {
+  const petals = $('petals');
+  ['rgba(201,168,76,0.6)', 'rgba(255,255,255,0.4)', 'rgba(168,184,154,0.5)', 'rgba(201,168,76,0.3)'].forEach((color) => {
+    for (let index = 0; index < 3; index += 1) {
+      const petal = document.createElement('div');
+      petal.className = 'petal';
+      petal.style.cssText = `left:${Math.random() * 100}%;background:${color};animation-duration:${6 + Math.random() * 8}s;animation-delay:${Math.random() * 6}s;transform:rotate(${Math.random() * 360}deg);`;
+      petals.appendChild(petal);
     }
   });
 }
+function boot() {
+  saveInquiries();
+  $('authClose').onclick = closeAuth;
+  $('authOverlay').addEventListener('click', (event) => { if (event.target === $('authOverlay')) closeAuth(); });
+  document.querySelectorAll('.auth-tab').forEach((tab) => {
+    tab.onclick = function onTabClick() {
+      document.querySelectorAll('.auth-tab').forEach((item) => item.classList.remove('active'));
+      document.querySelectorAll('.auth-panel').forEach((panel) => panel.classList.remove('active'));
+      this.classList.add('active');
+      $(`panel-${this.dataset.tab}`).classList.add('active');
+      clearFormErrors();
+    };
+  });
+  $('goRegister').onclick = (event) => { event.preventDefault(); document.querySelectorAll('.auth-tab')[1].click(); };
+  $('goLogin').onclick = (event) => { event.preventDefault(); document.querySelectorAll('.auth-tab')[0].click(); };
+  $('loginBtn').onclick = () => {
+    clearFormErrors();
+    const email = $('loginEmail').value.trim();
+    const password = $('loginPassword').value;
+    if (!email || !password) return showError('loginError', 'Please fill in all fields.');
+    if (btoa(email) === ADMIN_EMAIL_B64 && btoa(password) === ADMIN_PASS_B64) {
+      saveSession({ name: 'Administrator', email, role: 'admin' });
+      closeAuth();
+      updateNav();
+      showToast('Signed in as admin. Open the dashboard from the account menu anytime.');
+      return;
+    }
+    const user = users.find((item) => item.email === email && item.password === password);
+    if (!user) return showError('loginError', 'Invalid credentials. Please try again.');
+    saveSession({ name: `${user.firstName} ${user.lastName}`, email: user.email, role: 'customer', phone: user.phone });
+    closeAuth();
+    updateNav();
+    prefillInquiryContact();
+    showToast(`Welcome back, ${user.firstName}.`);
+  };
+  $('registerBtn').onclick = () => {
+    clearFormErrors();
+    const firstName = $('regFirst').value.trim();
+    const lastName = $('regLast').value.trim();
+    const email = $('regEmail').value.trim();
+    const phone = $('regPhone').value.trim();
+    const password = $('regPassword').value;
+    const confirm = $('regConfirm').value;
+    if (!firstName || !lastName || !email || !phone || !password) return showError('regError', 'Please fill in all required fields.');
+    if (password.length < 6) return showError('regError', 'Password must be at least 6 characters.');
+    if (password !== confirm) return showError('regError', 'Passwords do not match.');
+    if (users.some((item) => item.email === email)) return showError('regError', 'An account with this email already exists.');
+    users.push({ firstName, lastName, email, phone, password, registered: new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) });
+    saveUsers();
+    saveSession({ name: `${firstName} ${lastName}`, email, role: 'customer', phone });
+    closeAuth();
+    updateNav();
+    prefillInquiryContact();
+    showToast(`Account created for ${firstName}.`);
+  };
+  $('hamburger').onclick = () => $('mobileMenu').classList.add('open');
+  $('mobileClose').onclick = closeMobile;
+  window.addEventListener('scroll', () => $('navbar').classList.toggle('scrolled', window.scrollY > 60));
+  document.querySelectorAll('.reveal').forEach((element) => new IntersectionObserver((entries) => entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add('visible'); }), { threshold: 0.1 }).observe(element));
+  initPetals();
+  initGalleryDrag();
+  initLightbox();
+  initDatePickers();
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => anchor.onclick = function onAnchor(event) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) { event.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+  document.querySelectorAll('input, select, textarea').forEach((input) => { input.addEventListener('input', validateInput); input.addEventListener('change', validateInput); });
+  document.querySelectorAll('.explorer-tab').forEach((tab) => tab.onclick = () => switchExplorerView(tab.dataset.view));
+  document.querySelectorAll('.wizard-venue-card').forEach((card) => card.onclick = function onVenueClick() { document.querySelectorAll('.wizard-venue-card').forEach((item) => item.classList.remove('active')); this.classList.add('active'); captureWizardState(); });
+  document.querySelectorAll('[data-select-package]').forEach((button) => button.addEventListener('click', () => choosePackage(button.dataset.selectPackage, false)));
+  $('estPackage').onchange = updateCalculator;
+  $('estGuests').oninput = updateCalculator;
+  document.querySelectorAll('.est-addon').forEach((input) => input.onchange = updateCalculator);
+  $('wizPackage').onchange = syncEstimatorFromWizard;
+  $('wizGuests').oninput = syncEstimatorFromWizard;
+  document.querySelectorAll('.wiz-addon').forEach((input) => input.onchange = syncEstimatorFromWizard);
+  $('wizNext').onclick = () => goToStep(currentStep + 1);
+  $('wizPrev').onclick = () => goToStep(currentStep - 1);
+  $('wizDownloadPdf').onclick = downloadSoftQuote;
+  $('wizSubmit').onclick = submitInquiry;
+  updateNav();
+  updateCalculator();
+  prefillInquiryContact();
+  goToStep(1);
+}
+boot();

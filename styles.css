@@ -2332,7 +2332,7 @@ footer {
 .venue-cards.triple-grid {
   grid-template-columns: 1fr 1fr 1fr;
 }
-.venue-card {
+.wizard-venue-card {
   border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;
@@ -2349,25 +2349,25 @@ footer {
   padding: 15px;
   text-align: center;
 }
-.venue-card h4 {
+.wizard-venue-card h4 {
   font-family: "Cormorant Garamond", serif;
   font-size: 16px;
   margin-bottom: 5px;
   color: var(--dark);
 }
-.venue-card p {
+.wizard-venue-card p {
   font-size: 11px;
   color: var(--text-light);
 }
-.venue-card:hover {
+.wizard-venue-card:hover {
   border-color: var(--gold);
 }
-.venue-card.active {
+.wizard-venue-card.active {
   border-color: var(--gold);
   background: #fdfaf5;
   box-shadow: 0 10px 25px rgba(212, 175, 55, 0.1);
 }
-.venue-card.active .venue-card-img {
+.wizard-venue-card.active .venue-card-img {
   filter: grayscale(0%);
 }
 
@@ -2432,14 +2432,15 @@ footer {
   color: var(--dark);
 }
 
-.wizard-form-fields .form-group label {
+.wizard-step .form-group label {
   display: block;
   font-size: 12px;
   color: var(--text-light);
   margin-bottom: 8px;
   text-align: left;
 }
-.wizard-form-fields .form-group input, 
+.wizard-step .form-group input, 
+.wizard-step .form-group textarea,
 .wizard-select,
 .flatpickr-input {
   width: 100%;
@@ -2447,17 +2448,25 @@ footer {
   border: 1px solid #e5dfd5;
   font-family: "Jost", sans-serif;
   font-size: 14px;
-  background: #fff !important;
-  color: var(--dark) !important;
+  background: #ffffff !important;
+  color: #1e1e1a !important;
+  color-scheme: light !important;
   transition: 0.3s;
 }
-.wizard-form-fields .form-group input::placeholder {
-  color: #bbb;
+.wizard-step .form-group input::placeholder,
+.wizard-step .form-group textarea::placeholder {
+  color: #bbbbbb;
 }
-.wizard-form-fields .form-group input:focus, .wizard-select:focus {
+.wizard-step .form-group input:focus, 
+.wizard-step .form-group textarea:focus, 
+.wizard-select:focus {
   border-color: var(--gold);
   outline: none;
   background: #fdfaf5 !important;
+}
+.wizard-select option {
+  background-color: #ffffff !important;
+  color: #1e1e1a !important;
 }
 
 .wizard-nav {
@@ -2769,4 +2778,151 @@ footer {
     padding: 30px 20px;
     margin: 20px;
   }
+}
+
+.selected-package {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.customer-inquiry-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.customer-inquiry-item {
+  border: 1px solid #e5dfd5;
+  background: #fcfaf7;
+  padding: 14px 16px;
+  border-radius: 4px;
+}
+
+.customer-inquiry-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 6px;
+  color: var(--dark);
+}
+
+.customer-inquiry-meta {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.customer-empty-state {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.7;
+}
+
+.date-guide-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.date-guide-card {
+  background: white;
+  border: 1px solid #ece4d8;
+  border-radius: 8px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+.date-guide-card h3 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  color: var(--dark);
+  margin-bottom: 12px;
+}
+
+.date-guide-card p {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.8;
+}
+
+.date-planning-steps {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.wizard-note,
+.wizard-auth-note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-light);
+  background: #fcfaf7;
+  border-left: 3px solid var(--gold);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+}
+
+.wizard-venue-card {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.wizard-venue-card:hover {
+  border-color: var(--gold);
+}
+
+.wizard-venue-card.active {
+  border-color: var(--gold);
+  background: #fdfaf5;
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.1);
+}
+
+.wizard-venue-card.active .venue-card-img {
+  filter: grayscale(0%);
+}
+
+#wizNotes,
+.wizard-form-fields .form-group textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e5dfd5;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  background: #fff;
+  color: var(--dark);
+  transition: 0.3s;
+  resize: vertical;
+  min-height: 120px;
+}
+
+#wizNotes:focus,
+.wizard-form-fields .form-group textarea:focus {
+  border-color: var(--gold);
+  outline: none;
+  background: #fdfaf5;
+}
+
+.status-submitted {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-review {
+  background: #dce9f9;
+  color: #1d5c8c;
+}
+
+.status-proposal {
+  background: #d1e7dd;
+  color: #0a6640;
+}
+
+.status-closed {
+  background: #f8d7da;
+  color: #842029;
 }
