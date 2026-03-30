@@ -38,9 +38,7 @@ function getAddOnPrice(name) {
 }
 function calculateEstimate(packageKey, guestCount, addOns) {
   const pkg = PACKAGE_DATA[packageKey] || PACKAGE_DATA.crest;
-  const guests = Number(guestCount || 0);
-  const extraGuests = Math.max(0, guests - pkg.pax);
-  const baseTotal = pkg.base + (extraGuests * pkg.extra);
+  const baseTotal = pkg.base;
   const addOnTotal = (addOns || []).reduce((sum, addOn) => sum + getAddOnPrice(addOn), 0);
   return {
     packageName: pkg.name,
@@ -312,26 +310,82 @@ function updateBudgetField(total) {
   else if (total <= 250000) $('wizBudget').value = 'PHP 150,000 - PHP 250,000';
   else $('wizBudget').value = 'Above PHP 250,000';
 }
+function updateGuestLimits() {
+  const estPkg = PACKAGE_DATA[$('estPackage').value];
+  const wizPkg = PACKAGE_DATA[$('wizPackage').value];
+  
+  const estRaw = $('estGuests').value;
+  const wizRaw = $('wizGuests').value;
+  const estVal = parseInt(estRaw, 10);
+  const wizVal = parseInt(wizRaw, 10);
+  
+  // Estimator check
+  if (!isNaN(estVal)) {
+    if (estVal > estPkg.pax) {
+      $('estGuests').classList.add('invalid-input');
+      $('estGuestError').style.display = 'block';
+      $('estGuestError').textContent = `⚠ Exceeds ${estPkg.name} limit of ${estPkg.pax} guests.`;
+    } else if (estVal < 50 && estRaw.length > 0) {
+      $('estGuests').classList.add('invalid-input');
+      $('estGuestError').style.display = 'block';
+      $('estGuestError').textContent = `⚠ Minimum 50 guests required.`;
+    } else {
+      $('estGuests').classList.remove('invalid-input');
+      $('estGuestError').style.display = 'none';
+    }
+  } else {
+    $('estGuests').classList.remove('invalid-input');
+    $('estGuestError').style.display = 'none';
+  }
+  
+  // Wizard check
+  if (!isNaN(wizVal)) {
+    if (wizVal > wizPkg.pax) {
+      $('wizGuests').classList.add('invalid-input');
+      $('wizGuestError').style.display = 'block';
+      $('wizGuestError').textContent = `⚠ Exceeds ${wizPkg.name} limit of ${wizPkg.pax} guests.`;
+    } else if (wizVal < 50 && wizRaw.length > 0) {
+      $('wizGuests').classList.add('invalid-input');
+      $('wizGuestError').style.display = 'block';
+      $('wizGuestError').textContent = `⚠ Minimum 50 guests required.`;
+    } else {
+      $('wizGuests').classList.remove('invalid-input');
+      $('wizGuestError').style.display = 'none';
+    }
+  } else {
+    $('wizGuests').classList.remove('invalid-input');
+    $('wizGuestError').style.display = 'none';
+  }
+  
+  $('guestCountLabel').textContent = isNaN(estVal) ? '---' : estVal;
+}
 function updateCalculator() {
   const packageKey = $('estPackage').value;
   const guests = parseInt($('estGuests').value, 10) || 0;
   const pkg = PACKAGE_DATA[packageKey];
-  $('guestCountLabel').textContent = guests;
-  const extraGuests = Math.max(0, guests - pkg.pax);
+  
   const addOnTotal = Array.from(document.querySelectorAll('.est-addon:checked')).reduce((sum, input) => sum + parseInt(input.dataset.price, 10), 0);
-  const total = pkg.base + (extraGuests * pkg.extra) + addOnTotal;
+  
+  // Base price logic (Fixed price up to cap)
+  const total = pkg.base + addOnTotal;
+  
   $('totalPrice').textContent = formatCurrency(total);
-  $('estSummary').innerHTML = `<strong>${pkg.name}</strong> (${guests} Guests)<br>Base + extra guests: ${formatCurrency(pkg.base + extraGuests * pkg.extra)}<br>Add-ons: ${formatCurrency(addOnTotal)}`;
+  
+  const isOver = guests > pkg.pax;
+  $('estSummary').innerHTML = `<strong>${pkg.name}</strong> (${guests} Guests)${isOver ? ' <span style="color:var(--red)">[OVER CAPACITY]</span>' : ''}<br>Base Price: ${formatCurrency(pkg.base)}<br>Add-ons: ${formatCurrency(addOnTotal)}`;
+  
   if (!isSyncingEstimate) syncWizardFromEstimator(total);
   setPackageCardState(packageKey);
+  updateGuestLimits();
 }
 function syncWizardFromEstimator(totalOverride) {
   isSyncingEstimate = true;
   $('wizPackage').value = $('estPackage').value;
-  $('wizGuests').value = $('estGuests').value;
+  // $('wizGuests').value = $('estGuests').value; // Stop automatic syncing to keep wizard field empty for manual input
   setWizardAddOns(getSelectedEstimatorAddOns());
   updateBudgetField(totalOverride ?? 0);
   isSyncingEstimate = false;
+  updateGuestLimits();
 }
 function syncEstimatorFromWizard() {
   if (isSyncingEstimate) return;
@@ -391,8 +445,14 @@ function populateSummary() {
 }
 function validateCurrentStep() {
   if (currentStep === 2) {
+    const packageKey = $('wizPackage').value;
+    const pkg = PACKAGE_DATA[packageKey];
     const guests = parseInt($('wizGuests').value, 10);
-    if (!guests || guests < 50) { showToast('Enter a realistic guest count.', '#c0392b'); return false; }
+    if (isNaN(guests) || guests < 50) { 
+      showToast('Please enter a valid guest count (Minimum 50).', '#c0392b'); 
+      return false; 
+    }
+    if (guests > pkg.pax) { showToast(`${pkg.name} is limited to ${pkg.pax} guests max.`, '#c0392b'); return false; }
   }
   if (currentStep === 3) {
     const preferred = $('wizPreferredDate').value;
@@ -771,6 +831,7 @@ function boot() {
   $('wizSubmit').onclick = submitInquiry;
   updateNav();
   updateCalculator();
+  $('wizGuests').value = ''; // Ensure wizard starts blank
   prefillInquiryContact();
   goToStep(1);
 }
